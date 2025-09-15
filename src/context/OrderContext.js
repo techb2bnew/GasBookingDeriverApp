@@ -89,14 +89,30 @@ export const OrderProvider = ({children}) => {
   const acceptOrder = async (orderId) => {
     try {
       dispatch({type: 'SET_LOADING', payload: true});
-      const order = await orderService.acceptOrder(orderId);
-      dispatch({type: 'SET_CURRENT_ORDER', payload: order});
       
-      // Remove from available orders
-      const updatedOrders = state.availableOrders.filter(o => o.id !== orderId);
-      dispatch({type: 'SET_AVAILABLE_ORDERS', payload: updatedOrders});
+      // Get token from AsyncStorage
+      const token = await AsyncStorage.getItem('authToken');
+      if (!token) {
+        console.error('No auth token found');
+        return {success: false, error: 'Authentication token not found'};
+      }
+
+      // Call real API
+      const result = await authService.acceptOrder(token, orderId);
       
-      return {success: true};
+      if (result.success) {
+        const order = result.order;
+        dispatch({type: 'SET_CURRENT_ORDER', payload: order});
+        
+        // Remove from available orders
+        const updatedOrders = state.availableOrders.filter(o => o.id !== orderId);
+        dispatch({type: 'SET_AVAILABLE_ORDERS', payload: updatedOrders});
+        
+        return {success: true, order};
+      } else {
+        console.error('Error accepting order:', result.error);
+        return {success: false, error: result.error};
+      }
     } catch (error) {
       console.error('Error accepting order:', error);
       return {success: false, error: error.message};
@@ -105,15 +121,36 @@ export const OrderProvider = ({children}) => {
     }
   };
 
-  const updateOrderStatus = async (status, data = {}) => {
+  const updateOrderStatus = async (status, agentNotes = '') => {
     try {
-      const updatedOrder = await orderService.updateOrderStatus(
-        state.currentOrder.id,
-        status,
-        data
-      );
-      dispatch({type: 'UPDATE_ORDER_STATUS', payload: status});
-      return {success: true};
+      if (!state.currentOrder) {
+        return {success: false, error: 'No current order found'};
+      }
+
+      // Get token from AsyncStorage
+      const token = await AsyncStorage.getItem('authToken');
+      if (!token) {
+        console.error('No auth token found');
+        return {success: false, error: 'Authentication token not found'};
+      }
+
+      // Call real API
+      const result = await authService.updateOrderStatus(token, state.currentOrder.id, status, agentNotes);
+      
+      if (result.success) {
+        const updatedOrder = result.order;
+        dispatch({type: 'UPDATE_ORDER_STATUS', payload: status});
+        
+        // Update the current order with the response data if available
+        if (updatedOrder) {
+          dispatch({type: 'SET_CURRENT_ORDER', payload: updatedOrder});
+        }
+        
+        return {success: true, order: updatedOrder};
+      } else {
+        console.error('Error updating order status:', result.error);
+        return {success: false, error: result.error};
+      }
     } catch (error) {
       console.error('Error updating order status:', error);
       return {success: false, error: error.message};

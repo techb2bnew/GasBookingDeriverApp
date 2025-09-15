@@ -19,7 +19,9 @@ import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import OTPTextInput from 'react-native-otp-textinput';
 import { useOrder } from '../context/OrderContext';
-import { fontSize, spacing, borderRadius ,wp,hp} from '../utils/dimensions';
+import { authService } from '../services/authService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { fontSize, spacing, borderRadius, wp, hp } from '../utils/dimensions';
 
 const DeliveryScreen = ({ navigation }) => {
   const { currentOrder, completeOrder } = useOrder();
@@ -29,17 +31,21 @@ const DeliveryScreen = ({ navigation }) => {
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [deliveryOtp, setDeliveryOtp] = useState('');
   const [otpError, setOtpError] = useState('');
+  const [apiError, setApiError] = useState('');
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
 
   const selectImage = () => {
-    Alert.alert(
-      'Select Photo',
-      'Choose how you want to add a delivery proof photo',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Camera', onPress: openCamera },
-        // { text: 'Gallery', onPress: openGallery },
-      ]
-    );
+    // Alert.alert(
+    //   'Select Photo',
+    //   'Choose how you want to add a delivery proof photo',
+    //   [
+    //     { text: 'Cancel', style: 'cancel' },
+    //     { text: 'Camera', onPress: openCamera },
+    //     // { text: 'Gallery', onPress: openGallery },
+    //   ]
+    // );
+    openCamera()
   };
 
   async function requestCameraPermission() {
@@ -144,55 +150,81 @@ const DeliveryScreen = ({ navigation }) => {
 
   const handleCompleteDelivery = async () => {
     if (!deliveryPhoto) {
-      Alert.alert('Photo Required', 'Please take a photo as proof of delivery');
+      setApiError('Please take a delivery proof photo');
       return;
     }
 
-    // Show OTP modal instead of completing directly
-    setShowOtpModal(true);
+    setSendingOtp(true);
+    setApiError('');
+
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      if (!token) {
+        setApiError('Authentication token not found');
+        setSendingOtp(false);
+        return;
+      }
+
+      const result = await authService.sendDeliveryOtp(token, currentOrder.id);
+
+      if (result.success) {
+        setSendingOtp(false);
+        setShowOtpModal(true);
+        console.log('OTP sent successfully');
+      } else {
+        setApiError(result.error || 'Failed to send OTP');
+        setSendingOtp(false);
+      }
+    } catch (error) {
+      setApiError('Network error occurred');
+      setSendingOtp(false);
+      console.log('Error sending OTP:', error);
+    }
   };
 
   const handleOtpSubmit = async () => {
-    if (!deliveryOtp || deliveryOtp.length !== 4) {
-      setOtpError('Please enter 4-digit OTP');
+    if (!deliveryOtp || deliveryOtp.length !== 6) {
+      setOtpError('Please enter 6-digit OTP');
       return;
     }
 
     setOtpError('');
-    setLoading(true);
+    setVerifyingOtp(true);
 
     try {
-      const deliveryData = {
-        photo: deliveryPhoto,
-        notes: notes,
-        otp: deliveryOtp,
-        completedAt: new Date().toISOString(),
-      };
+      const token = await AsyncStorage.getItem('authToken');
+      if (!token) {
+        setOtpError('Authentication token not found');
+        setVerifyingOtp(false);
+        return;
+      }
 
-      const result = await completeOrder(deliveryData);
+      const result = await authService.verifyDeliveryOtp(token, currentOrder.id, deliveryOtp);
+
       if (result.success) {
+        setVerifyingOtp(false);
         setShowOtpModal(false);
-        // Alert.alert(
-        //   'Delivery Completed!',
-        //   'Order has been successfully delivered.',
-        //   [
-        //     {
-        //       text: 'OK',
-        //       onPress: () => navigation.navigate('Main', { screen: 'Dashboard' })
-        //     },
-        //   ]
-        // );
-        navigation.navigate('Main', { screen: 'Dashboard' })
+        console.log('Delivery completed successfully!');
+        // Navigate back to dashboard
+        navigation.navigate('Main', { screen: 'Dashboard' });
       } else {
-        console.log('Error', 'Failed to complete delivery');
+        setOtpError(result.error || 'Failed to verify OTP');
+        setVerifyingOtp(false);
       }
     } catch (error) {
-      console.log('Error', 'Something went wrong');
-    } finally {
-      setLoading(false);
+      setOtpError('Network error occurred');
+      setVerifyingOtp(false);
+      console.log('Error verifying OTP:', error);
     }
   };
-
+  const capitalizeFirstLetter = (text) => {
+    if (!text) return '';
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  };
+  const truncateText = (text, maxLength = 15) => {
+    if (!text) return '';
+    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+  };
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -222,26 +254,32 @@ const DeliveryScreen = ({ navigation }) => {
                   <Text style={styles.value}>#{currentOrder?.id}</Text>
                 </View>
                 <View style={styles.summaryRow}>
+                  <Text style={styles.label}>Order Number:</Text>
+                  <Text style={styles.value}>{currentOrder?.orderNumber}</Text>
+                </View>
+                <View style={styles.summaryRow}>
                   <Text style={styles.label}>Customer:</Text>
-                  <Text style={styles.value}>{currentOrder?.customer.name}</Text>
+                  <Text style={styles.value}>{capitalizeFirstLetter(currentOrder?.customerName)}</Text>
                 </View>
                 <View style={styles.summaryRow}>
-                  <Text style={styles.label}>Gas Type:</Text>
-                  <Text style={styles.value}>{currentOrder?.gasType}</Text>
+                  <Text style={styles.label}>Customer Phone:</Text>
+                  <Text style={styles.value}>{currentOrder?.customerPhone}</Text>
                 </View>
                 <View style={styles.summaryRow}>
-                  <Text style={styles.label}>Quantity:</Text>
-                  <Text style={styles.value}>{currentOrder?.quantity} cylinders</Text>
+                  <Text style={styles.label}>Customer Email:</Text>
+                  <Text style={styles.value}>{currentOrder?.customerEmail}</Text>
                 </View>
-                {currentOrder?.accessories && currentOrder.accessories.length > 0 && (
-                  <View style={styles.summaryRow}>
-                    <Text style={styles.label}>Accessories:</Text>
-                    <Text style={styles.value}>{currentOrder.accessories.join(', ')}</Text>
-                  </View>
-                )}
                 <View style={styles.summaryRow}>
-                  <Text style={styles.label}>Total:</Text>
-                  <Text style={styles.value}>₹{currentOrder?.total}</Text>
+                  <Text style={styles.label}>Payment Method:</Text>
+                  <Text style={styles.value}>{currentOrder?.paymentMethod?.replace('_', ' ').toUpperCase()}</Text>
+                </View>
+                <View style={styles.summaryRow}>
+                  <Text style={styles.label}>Total Amount:</Text>
+                  <Text style={styles.value}>₹{currentOrder?.totalAmount}</Text>
+                </View>
+                <View style={styles.summaryRow}>
+                  <Text style={styles.label}>Delivery Address:</Text>
+                  <Text style={styles.value}>{currentOrder?.customerAddress}</Text>
                 </View>
               </View>
             </View>
@@ -288,16 +326,22 @@ const DeliveryScreen = ({ navigation }) => {
               />
             </View>
 
+            {apiError ? (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{apiError}</Text>
+              </View>
+            ) : null}
+
             <TouchableOpacity
               style={[
                 styles.completeButton,
-                (!deliveryPhoto || loading) && styles.completeButtonDisabled,
+                (!deliveryPhoto || sendingOtp) && styles.completeButtonDisabled,
               ]}
               onPress={handleCompleteDelivery}
-              disabled={!deliveryPhoto || loading}>
+              disabled={!deliveryPhoto || sendingOtp}>
               <Icon name="check-circle" size={20} color="#ffffff" />
               <Text style={styles.completeButtonText}>
-                {loading ? 'Completing...' : 'Complete Delivery'}
+                {sendingOtp ? 'Sending OTP...' : 'Complete Delivery'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -311,11 +355,11 @@ const DeliveryScreen = ({ navigation }) => {
         animationType="slide"
         onRequestClose={() => setShowOtpModal(false)}
       >
-        <KeyboardAvoidingView 
+        <KeyboardAvoidingView
           style={styles.modalOverlay}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-          <ScrollView 
+          <ScrollView
             contentContainerStyle={styles.modalScrollContent}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
@@ -323,16 +367,16 @@ const DeliveryScreen = ({ navigation }) => {
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Delivery OTP</Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.closeButton}
                   onPress={() => setShowOtpModal(false)}
                 >
                   <Icon name="close" size={24} color="#6b7280" />
                 </TouchableOpacity>
               </View>
-              
+
               <Text style={styles.modalSubtitle}>
-                Please enter the 4-digit OTP provided by customer
+                Please enter the 6-digit OTP provided by customer
               </Text>
 
               {deliveryPhoto && (
@@ -355,12 +399,12 @@ const DeliveryScreen = ({ navigation }) => {
                   defaultValue=""
                   keyboardType="numeric"
                   autoFocus={true}
-                  inputCount={4}
+                  inputCount={6}
                   keyboardAppearance="light"
                   returnKeyType="done"
                   onSubmitEditing={() => {
-                    // Auto-submit when 4 digits are entered
-                    if (deliveryOtp.length === 4) {
+                    // Auto-submit when 6 digits are entered
+                    if (deliveryOtp.length === 6) {
                       handleOtpSubmit();
                     }
                   }}
@@ -368,10 +412,14 @@ const DeliveryScreen = ({ navigation }) => {
                     inputAccessoryViewID: 'otpToolbar'
                   })}
                 />
-            
-              </View>
 
-              {otpError ? <Text style={styles.errorText}>{otpError}</Text> : null}
+              </View>
+              {otpError ? (
+                <View style={styles.otpErrorContainer}>
+                  <Text style={styles.otpErrorText}>{otpError}</Text>
+                </View>
+              ) : null}
+              {/* {otpError ? <Text style={styles.errorText}>{otpError}</Text> : null} */}
 
               <View style={styles.modalButtons}>
                 <TouchableOpacity
@@ -382,9 +430,9 @@ const DeliveryScreen = ({ navigation }) => {
                 <TouchableOpacity
                   style={[styles.modalButton, styles.modalButtonPrimary]}
                   onPress={handleOtpSubmit}
-                  disabled={loading || deliveryOtp.length !== 4}>
-                  {loading ? (
-                    <Text style={[styles.modalButtonText, { color: "#ffffff" }]}>Completing...</Text>
+                  disabled={verifyingOtp}>
+                  {verifyingOtp ? (
+                    <Text style={[styles.modalButtonText, { color: "#ffffff" }]}>Verifying...</Text>
                   ) : (
                     <Text style={[styles.modalButtonText, { color: "#ffffff" }]}>Complete Delivery</Text>
                   )}
@@ -401,7 +449,7 @@ const DeliveryScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff', 
+    backgroundColor: '#ffffff',
   },
   header: {
     flexDirection: 'row',
@@ -460,12 +508,14 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: fontSize.sm,
-    color: '#6b7280', // Gray text
+    color: '#6b7280',
+    width: "40%",// Gray text
   },
   value: {
     fontSize: fontSize.sm,
     fontWeight: '500',
     color: '#1f2937', // Dark text
+    width: "60%",
   },
   photoSection: {
     marginTop: spacing.xxl,
@@ -551,6 +601,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#ffffff', // White text
+  },
+  errorContainer: {
+    backgroundColor: '#fee2e2',
+    borderColor: '#fca5a5',
+    borderWidth: 1,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  errorText: {
+    color: '#dc2626',
+    fontSize: fontSize.sm,
+    textAlign: 'center',
   },
   // Modal Styles
   modalOverlay: {
@@ -641,25 +704,37 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   otpInputContainer: {
-    marginBottom: 10,
+    paddingHorizontal: spacing.md,
   },
   otpInput: {
     borderWidth: 2,
-    borderColor: '#6b7280', // Gray border
-    borderRadius: 12,
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#1f2937', // Dark text
-    backgroundColor: '#ffffff', // White background
-    width: wp('15%'),
-    height: wp('15%'),
+    borderColor: '#d1d5db',
+    borderRadius: borderRadius.lg,
+    fontSize: fontSize.lg,
+    color: '#1f2937',
+    backgroundColor: '#ffffff',
+    width: 45,
+    height: 48,
     textAlign: 'center',
+    marginHorizontal:2
   },
   errorText: {
     color: '#ef4444', // Red
     fontSize: 12,
     textAlign: 'center',
-    marginBottom: 16,
+  },
+  otpErrorContainer: {
+    backgroundColor: '#fee2e2',
+    borderColor: '#fca5a5',
+    borderWidth: 1,
+    borderRadius: borderRadius.md,
+    padding: spacing.sm,
+  },
+  otpErrorText: {
+    color: '#dc2626',
+    fontSize: fontSize.sm,
+    textAlign: 'center',
+    fontWeight: '500',
   },
   keyboardToolbar: {
     flexDirection: 'row',

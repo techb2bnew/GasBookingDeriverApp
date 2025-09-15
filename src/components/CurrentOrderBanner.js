@@ -61,7 +61,7 @@ const CurrentOrderBanner = ({ order, onPress }) => {
           </View>
           <View style={styles.orderInfo}>
             <Text style={styles.statusText}>{statusInfo.text}</Text>
-            <Text style={styles.orderId}>Order #{order.id}</Text>
+            <Text style={styles.orderId}>Order #{order?.id}</Text>
           </View>
         </View>
         <View style={styles.rightSection}>

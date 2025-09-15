@@ -63,10 +63,15 @@ const DashboardScreen = ({ navigation }) => {
 
   const confirmAcceptOrder = async () => {
     setShowAcceptAlert(false);
-    const result = await acceptOrder(selectedOrderId);
-    if (result.success) {
-      navigation.navigate('OrderDetail');
-    } else {
+    try {
+      const result = await acceptOrder(selectedOrderId);
+      if (result.success) {
+        // Navigate to OrderDetail screen with the accepted order
+        navigation.navigate('OrderDetail');
+      } else {
+        console.log('Error', result.error || 'Failed to accept order');
+      }
+    } catch (error) {
       console.log('Error', 'Failed to accept order');
     }
     setSelectedOrderId(null);
@@ -121,7 +126,7 @@ const DashboardScreen = ({ navigation }) => {
   const renderOrderItem = ({ item }) => (
     <OrderCard
       order={item}
-      onAccept={() => handleAcceptOrder(item.id)}
+      onAccept={() => handleAcceptOrder(item?.id)}
     />
   );
 

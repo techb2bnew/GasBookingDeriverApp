@@ -176,4 +176,148 @@ export const authService = {
       return { success: false, error: error.message || 'Network error' };
     }
   },
+
+  acceptOrder: async (token, orderId, status = 'out_for_delivery', agentNotes = 'Order accepted by driver') => {
+    try {
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/orders/${orderId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          status, 
+          agentNotes 
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message = data?.error || 'Failed to accept order';
+        return { success: false, error: message, statusCode: data?.statusCode || response.status };
+      }
+
+      return { 
+        success: true, 
+        message: data?.message || 'Order accepted successfully', 
+        order: data?.data?.order || data?.order
+      };
+    } catch (error) {
+      return { success: false, error: error.message || 'Network error' };
+    }
+  },
+
+  updateOrderStatus: async (token, orderId, status, agentNotes = '') => {
+    try {
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/orders/${orderId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          status, 
+          agentNotes 
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message = data?.error || 'Failed to update order status';
+        return { success: false, error: message, statusCode: data?.statusCode || response.status };
+      }
+
+      return { 
+        success: true, 
+        message: data?.message || 'Order status updated successfully', 
+        order: data?.data?.order || data?.order
+      };
+    } catch (error) {
+      return { success: false, error: error.message || 'Network error' };
+    }
+  },
+
+  sendDeliveryOtp: async (token, orderId) => {
+    try {
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/orders/${orderId}/send-otp`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message = data?.error || 'Failed to send OTP';
+        return { success: false, error: message, statusCode: data?.statusCode || response.status };
+      }
+
+      return { 
+        success: true, 
+        message: data?.message || 'OTP sent successfully'
+      };
+    } catch (error) {
+      return { success: false, error: error.message || 'Network error' };
+    }
+  },
+
+  verifyDeliveryOtp: async (token, orderId, otp) => {
+    try {
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/orders/${orderId}/verify-otp`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ otp }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message = data?.error || 'Failed to verify OTP';
+        return { success: false, error: message, statusCode: data?.statusCode || response.status };
+      }
+
+      return { 
+        success: true, 
+        message: data?.message || 'OTP verified successfully',
+        order: data?.data?.order || data?.order
+      };
+    } catch (error) {
+      return { success: false, error: error.message || 'Network error' };
+    }
+  },
+
+  getAgentStats: async (token) => {
+    try {
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/orders/agent/stats`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message = data?.error || 'Failed to fetch agent stats';
+        return { success: false, error: message, statusCode: data?.statusCode || response.status };
+      }
+
+      return { 
+        success: true, 
+        message: data?.message || 'Agent stats retrieved successfully',
+        data: data?.data || {},
+        orders: data?.data?.orders || [],
+        stats: data?.data?.stats || {}
+      };
+    } catch (error) {
+      return { success: false, error: error.message || 'Network error' };
+    }
+  },
 };

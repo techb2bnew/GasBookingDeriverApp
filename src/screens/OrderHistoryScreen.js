@@ -9,16 +9,57 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useOrder } from '../context/OrderContext';
-import { fontSize, spacing, borderRadius,wp,hp } from '../utils/dimensions';
+import { authService } from '../services/authService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { fontSize, spacing, borderRadius, wp, hp } from '../utils/dimensions';
 
 const OrderHistoryScreen = () => {
-  const { orderHistory, fetchOrderHistory } = useOrder();
+  const [orderHistory, setOrderHistory] = useState([]);
+  const [stats, setStats] = useState({});
   const [refreshing, setRefreshing] = useState(false);
-  const [filter, setFilter] = useState('all'); // all, delivered, canceled
+  const [loading, setLoading] = useState(false);
+  const [filter, setFilter] = useState('all'); // all, delivered, cancelled
 
   useEffect(() => {
     fetchOrderHistory();
   }, []);
+
+  const fetchOrderHistory = async () => {
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem('authToken');
+      if (!token) {
+        console.log('No auth token found');
+        return;
+      }
+
+      const result = await authService.getAgentStats(token);
+
+      if (result.success) {
+        // Combine delivered and cancelled orders for "all" filter
+        console.log('API Response:', result);
+
+        // Handle both response structures
+        const deliveredOrders = result.data?.deliveredOrders || [];
+        const cancelledOrders = result.data?.cancelledOrders || [];
+        const stats = result.data?.stats || result.stats || {};
+
+        const allOrders = [...deliveredOrders, ...cancelledOrders];
+        console.log('All Orders:', allOrders);
+        console.log('Stats:', stats);
+
+        setOrderHistory(allOrders);
+        setStats(stats);
+        console.log('Order history fetched successfully');
+      } else {
+        console.log('Error fetching order history:', result.error);
+      }
+    } catch (error) {
+      console.log('Error fetching order history:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -28,13 +69,24 @@ const OrderHistoryScreen = () => {
 
   const getFilteredOrders = () => {
     if (filter === 'all') return orderHistory;
-    return orderHistory.filter(order => order.status === filter);
+    if (filter === 'delivered') return orderHistory.filter(order => order.status === 'delivered');
+    if (filter === 'cancelled') return orderHistory.filter(order => order.status === 'cancelled');
+    return orderHistory;
   };
-
+  const truncateText = (text, maxLength = 25) => {
+    if (!text) return '';
+    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+  };
+  const capitalizeFirstLetter = (text) => {
+    if (!text) return '';
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  };
   const getStatusColor = (status) => {
     switch (status) {
       case 'delivered':
         return '#10b981';
+      case 'cancelled':
+        return '#ef4444';
       case 'canceled':
         return '#ef4444';
       default:
@@ -46,6 +98,8 @@ const OrderHistoryScreen = () => {
     switch (status) {
       case 'delivered':
         return 'check-circle';
+      case 'cancelled':
+        return 'cancel';
       case 'canceled':
         return 'cancel';
       default:
@@ -60,43 +114,35 @@ const OrderHistoryScreen = () => {
 
   const OrderItem = ({ order }) => (
     <View style={styles.orderItem}>
-      <View style={styles.orderHeader}>
-        <View style={styles.orderIdContainer}>
-          <Text style={styles.orderId}>#{order.id}</Text>
-          <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(order.status)}15` }]}>
+        <View style={styles.orderHeader}>
+          <View style={styles.orderIdContainer}>
+            <Text style={styles.orderId}>#{truncateText(order.id, 25)}</Text>
+            <Text style={styles.orderDate}>{formatDate(order?.deliveredAt || order?.cancelledAt || order?.createdAt)}</Text>
+          </View>
+          <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(order?.status)}15` }]}>
             <Icon
-              name={getStatusIcon(order.status)}
+              name={getStatusIcon(order?.status)}
               size={12}
-              color={getStatusColor(order.status)}
+              color={getStatusColor(order?.status)}
             />
             <Text style={[styles.statusText, { color: getStatusColor(order.status) }]}>
-              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+              {order?.status.charAt(0).toUpperCase() + order?.status.slice(1)}
             </Text>
           </View>
         </View>
-        <Text style={styles.orderDate}>{formatDate(order.completedAt || order.createdAt)}</Text>
-      </View>
 
       <View style={styles.orderDetails}>
         <View style={styles.detailRow}>
-          <Icon name="local-gas-station" size={16} color="#717182" />
-          <Text style={styles.detailText}>{order.gasStation.name}</Text>
-        </View>
-        <View style={styles.detailRow}>
           <Icon name="person" size={16} color="#717182" />
-          <Text style={styles.detailText}>{order.customer.name}</Text>
+          <Text style={styles.detailText}>{capitalizeFirstLetter(order?.customerName)}</Text>
         </View>
         <View style={styles.detailRow}>
-          <Icon name="local-gas-station" size={16} color="#717182" />
-          <Text style={styles.detailText}>
-            {order.gasType} - {order.quantity} cylinder{order.quantity > 1 ? 's' : ''}
-          </Text>
+          <Icon name="location-on" size={16} color="#717182" />
+          <Text style={styles.detailText}>{order?.customerAddress}</Text>
         </View>
         <View style={styles.detailRow}>
           <Icon name="attach-money" size={16} color="#717182" />
-          <Text style={styles.detailText}>
-            Order: ₹{order.total} | Fee: ₹{order.deliveryFee || 0}
-          </Text>
+          <Text style={styles.detailText}>₹{order?.totalAmount}</Text>
         </View>
       </View>
     </View>
@@ -118,10 +164,32 @@ const OrderHistoryScreen = () => {
         <Text style={styles.headerTitle}>Order History</Text>
       </View>
 
+      {/* Stats Section */}
+      {stats && Object.keys(stats).length > 0 && (
+        <View style={styles.statsContainer}>
+          <View style={styles.statCard}>
+            <Text style={styles.statNumber}>{stats?.totalOrders || 0}</Text>
+            <Text style={styles.statLabel}>Total Orders</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statNumber}>{stats?.delivered || 0}</Text>
+            <Text style={styles.statLabel}>Delivered</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statNumber}>{stats?.cancelled || 0}</Text>
+            <Text style={styles.statLabel}>Cancelled</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statNumber}>₹{stats?.earnings || '0'}</Text>
+            <Text style={styles.statLabel}>Earnings</Text>
+          </View>
+        </View>
+      )}
+
       <View style={styles.filterContainer}>
         <FilterButton title="All" value="all" active={filter === 'all'} />
         <FilterButton title="Delivered" value="delivered" active={filter === 'delivered'} />
-        <FilterButton title="Canceled" value="canceled" active={filter === 'canceled'} />
+        <FilterButton title="Cancelled" value="cancelled" active={filter === 'cancelled'} />
       </View>
 
       {getFilteredOrders().length === 0 ? (
@@ -166,6 +234,31 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xl,
     fontWeight: '600',
     color: 'white', // Dark text
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    marginVertical: spacing.lg,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: '#f9fafb',
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    alignItems: 'center',
+    marginHorizontal: spacing.xs,
+  },
+  statNumber: {
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: spacing.xs,
+  },
+  statLabel: {
+    fontSize: fontSize.xs,
+    color: '#6b7280',
+    textAlign: 'center',
   },
   filterContainer: {
     flexDirection: 'row',
@@ -226,14 +319,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   orderIdContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flex: 1,
   },
   orderId: {
     fontSize: fontSize.md,
     fontWeight: '600',
-    color: '#1f2937', // Dark text
-    marginRight: spacing.sm,
+    color: '#1f2937',
+    marginBottom: spacing.xs,
   },
   statusBadge: {
     flexDirection: 'row',
@@ -249,7 +341,8 @@ const styles = StyleSheet.create({
   },
   orderDate: {
     fontSize: fontSize.xs,
-    color: '#6b7280', // Gray text
+    color: '#6b7280',
+    marginTop: spacing.xs,
   },
   orderDetails: {
     gap: spacing.xs,
@@ -261,7 +354,7 @@ const styles = StyleSheet.create({
   detailText: {
     fontSize: 14,
     color: '#1f2937', // Dark text
-    marginLeft: 8,
+    paddingHorizontal: 8,
   },
 });
 
