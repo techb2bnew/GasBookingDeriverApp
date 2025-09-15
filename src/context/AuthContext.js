@@ -66,14 +66,17 @@ export const AuthProvider = ({children}) => {
     }
   };
 
-  const login = async (phoneNumber, otp) => {
+  const login = async (email, otp) => {
     try {
       dispatch({type: 'SET_LOADING', payload: true});
-      const response = await authService.loginWithOtp(phoneNumber, otp);
+      const response = await authService.verifyOtp(email, otp);
       
       if (response.success) {
         await AsyncStorage.setItem('authToken', response.token);
         await AsyncStorage.setItem('userData', JSON.stringify(response.user));
+        if (response.deliveryAgent) {
+          await AsyncStorage.setItem('deliveryAgent', JSON.stringify(response.deliveryAgent));
+        }
         
         dispatch({
           type: 'LOGIN_SUCCESS',

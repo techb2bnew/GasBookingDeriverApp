@@ -4,40 +4,46 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  Pressable,
+  Linking,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
 
-const OrderCard = ({order, onAccept}) => {
+const OrderCard = ({ order, onAccept }) => {
   const formatTime = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  // Calculate total items quantity
+  const totalQuantity = order.items ? order.items.reduce((sum, item) => sum + item.quantity, 0) : 0;
+
+  // Get first item for gas type (assuming all items are same type)
+  const firstItem = order.items && order.items.length > 0 ? order.items[0] : null;
+
+  // Truncate text to 15 characters
+  const truncateText = (text, maxLength = 15) => {
+    if (!text) return '';
+    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+  };
+  const handleCall = (phoneNumber) => {
+    Linking.openURL(`tel:${phoneNumber}`);
+  }
+  const capitalizeFirstLetter = (text) => {
+    if (!text) return '';
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  };
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.orderInfo}>
-          <Text style={styles.orderId}>Order #{order.id}</Text>
-          <Text style={styles.orderTime}>{formatTime(order.createdAt)}</Text>
+          <Text style={styles.orderId}>Order #{truncateText(order?.id, 18)}</Text>
+          <Text style={styles.orderTime}>{formatTime(order?.createdAt)}</Text>
         </View>
         <View style={styles.earningsContainer}>
-          <Text style={styles.earnings}>₹{order.deliveryFee}</Text>
-          <Text style={styles.earningsLabel}>Delivery Fee</Text>
-        </View>
-      </View>
-
-      <View style={styles.gasStationSection}>
-        <View style={styles.gasStationInfo}>
-          <Icon name="local-gas-station" size={18} color="#030213" />
-          <View style={styles.gasStationDetails}>
-            <Text style={styles.gasStationName}>{order.gasStation.name}</Text>
-            <Text style={styles.gasStationAddress}>{order.gasStation.address}</Text>
-          </View>
-        </View>
-        <View style={styles.distanceContainer}>
-          <Icon name="location-on" size={14} color="#717182" />
-          <Text style={styles.distance}>{order.gasStation.distance}</Text>
+          <Text style={styles.earnings}>₹{order?.totalAmount || '0'}</Text>
+          <Text style={styles.earningsLabel}>Total Amount</Text>
         </View>
       </View>
 
@@ -45,36 +51,31 @@ const OrderCard = ({order, onAccept}) => {
         <View style={styles.customerInfo}>
           <Icon name="person" size={18} color="#030213" />
           <View style={styles.customerDetails}>
-            <Text style={styles.customerName}>{order.customer.name}</Text>
-            <Text style={styles.customerAddress}>{order.customer.address}</Text>
+            <Text style={styles.customerName}>{truncateText(capitalizeFirstLetter(order?.customerName) || 'Customer')}</Text>
+            <Text style={styles.customerAddress}>{order?.customerAddress || 'Address not available'}</Text>
           </View>
         </View>
-        <View style={styles.distanceContainer}>
-          <Icon name="location-on" size={14} color="#717182" />
-          <Text style={styles.distance}>{order.customer.distance}</Text>
-        </View>
+        <Pressable style={styles.phoneContainer} onPress={() => handleCall(order?.customerPhone)}>
+          <Icon name="phone" size={13} color="#3b82f6" />
+          <Text style={styles.phoneText}>{order?.customerPhone || 'N/A'}</Text>
+        </Pressable>
       </View>
 
       <View style={styles.orderDetails}>
         <View style={styles.orderStat}>
-          <Text style={styles.statValue}>{order.quantity}</Text>
-          <Text style={styles.statLabel}>Cylinders</Text>
+          <Text style={styles.statValue}>{totalQuantity}</Text>
+          <Text style={styles.statLabel}>Items</Text>
         </View>
         <View style={styles.orderStat}>
-          <Text style={styles.statValue}>{order.gasType}</Text>
-          <Text style={styles.statLabel}>Gas Type</Text>
+          <Text style={styles.statValue}>{capitalizeFirstLetter(firstItem?.productName) || 'Gas'}</Text>
+          <Text style={styles.statLabel}>Product</Text>
         </View>
         <View style={styles.orderStat}>
-          <Text style={styles.statValue}>₹{order.total}</Text>
-          <Text style={styles.statLabel}>Total</Text>
+          <Text style={styles.statValue}>{capitalizeFirstLetter(order?.paymentMethod) || 'COD'}</Text>
+          <Text style={styles.statLabel}>Payment</Text>
         </View>
-        <View style={styles.orderStat}>
-          <Text style={styles.statValue}>{order.estimatedTime}</Text>
-          <Text style={styles.statLabel}>Est. Time</Text>
-        </View>
+
       </View>
-
-
 
       <TouchableOpacity style={styles.acceptButton} onPress={onAccept}>
         <Text style={styles.acceptButtonText}>Accept Order</Text>
@@ -122,9 +123,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   earnings: {
-    fontSize: fontSize.lg,
+    fontSize: fontSize.md,
     fontWeight: '600',
-    color: '#10b981', // Green text
+    color: '#10b981',
   },
   earningsLabel: {
     fontSize: fontSize.xs,
@@ -163,13 +164,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6', // Light background border
+    paddingHorizontal: spacing.sm,
+    backgroundColor: '#ffffff',
+    borderRadius: spacing.sm,
+    marginVertical: spacing.xs,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
   },
   customerInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    width: "60%",
   },
   customerDetails: {
     marginLeft: spacing.sm,
@@ -184,36 +189,58 @@ const styles = StyleSheet.create({
     color: '#6b7280', // Gray text
     marginTop: 2,
   },
+  phoneContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    padding: spacing.sm,
+    borderRadius: spacing.lg,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  phoneText: {
+    fontSize: fontSize.xs,
+    color: '#1f2937',
+    marginLeft: spacing.xs,
+    fontWeight: '500',
+  },
   distanceContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f3f4f6', // Light background
+    backgroundColor: '#f3f4f6',
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: spacing.md,
   },
   distance: {
     fontSize: fontSize.xs,
-    color: '#6b7280', // Gray text
+    color: '#6b7280',
     marginLeft: 2,
   },
   orderDetails: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingVertical: spacing.lg,
+    paddingVertical: spacing.md,
+    backgroundColor: '#f8f9fa',
+    borderRadius: spacing.md,
+    marginVertical: spacing.sm,
   },
   orderStat: {
     alignItems: 'center',
+    flex: 1,
+    paddingVertical: spacing.sm,
   },
   statValue: {
-    fontSize: fontSize.md,
+    fontSize: fontSize.sm,
     fontWeight: '600',
     color: '#1f2937', // Dark text
+    textAlign: 'center',
   },
   statLabel: {
     fontSize: fontSize.xs,
     color: '#6b7280', // Gray text
     marginTop: 2,
+    textAlign: 'center',
   },
   acceptButton: {
     flexDirection: 'row',

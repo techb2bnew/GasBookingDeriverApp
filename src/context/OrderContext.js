@@ -1,5 +1,7 @@
 import React, {createContext, useContext, useReducer} from 'react';
 import {orderService} from '../services/orderService';
+import {authService} from '../services/authService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const OrderContext = createContext();
 
@@ -45,10 +47,40 @@ export const OrderProvider = ({children}) => {
   const fetchAvailableOrders = async () => {
     try {
       dispatch({type: 'SET_LOADING', payload: true});
-      const orders = await orderService.getAvailableOrders();
-      dispatch({type: 'SET_AVAILABLE_ORDERS', payload: orders});
+      
+      // Get token from AsyncStorage
+      const token = await AsyncStorage.getItem('authToken');
+      if (!token) {
+        console.error('No auth token found');
+        return;
+      }
+
+      // Call real API
+      const result = await authService.getOrders(token);
+      
+      if (result.success) {
+        // Filter orders that are assigned to current agent and available for delivery
+        const availableOrders = result.orders.filter(order => 
+          order.status === 'assigned' && 
+          order.assignedAgent && 
+          order.assignedAgent.id // Assuming we can identify current agent
+        );
+        dispatch({type: 'SET_AVAILABLE_ORDERS', payload: availableOrders});
+      } else {
+        console.error('Error fetching orders:', result.error);
+        // Fallback to mock data if API fails
+        const orders = await orderService.getAvailableOrders();
+        dispatch({type: 'SET_AVAILABLE_ORDERS', payload: orders});
+      }
     } catch (error) {
       console.error('Error fetching orders:', error);
+      // Fallback to mock data if API fails
+      try {
+        const orders = await orderService.getAvailableOrders();
+        dispatch({type: 'SET_AVAILABLE_ORDERS', payload: orders});
+      } catch (fallbackError) {
+        console.error('Fallback also failed:', fallbackError);
+      }
     } finally {
       dispatch({type: 'SET_LOADING', payload: false});
     }

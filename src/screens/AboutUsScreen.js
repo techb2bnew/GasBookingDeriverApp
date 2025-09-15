@@ -119,13 +119,13 @@ const AboutUsScreen = ({navigation}) => {
               <Text style={styles.legalText}>Terms of Service</Text>
               <Icon name="chevron-right" size={20} color="#717182" />
             </TouchableOpacity>
-            <TouchableOpacity 
+            {/* <TouchableOpacity 
               style={styles.legalItem}
               onPress={() => navigation.navigate('DriverAgreement')}
             >
               <Text style={styles.legalText}>Driver Agreement</Text>
               <Icon name="chevron-right" size={20} color="#717182" />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
         </View>
 

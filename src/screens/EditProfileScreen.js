@@ -12,7 +12,9 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useAuth } from '../context/AuthContext';
-import { fontSize, spacing, borderRadius,wp,hp } from '../utils/dimensions';
+import { fontSize, spacing, borderRadius, wp, hp } from '../utils/dimensions';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { authService } from '../services/authService';
 
 const EditProfileScreen = ({ navigation }) => {
   const { user, updateUser } = useAuth();
@@ -21,28 +23,53 @@ const EditProfileScreen = ({ navigation }) => {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
-    vehicleNumber: '',
-    licenseNumber: '',
-    vehicleModel: '',
-    vehicleColor: '',
     address: '',
+    vehicleNumber: '',
+    panCardNumber: '',
+    aadharCardNumber: '',
+    drivingLicence: '',
+    bankDetails: '',
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [profileData, setProfileData] = useState(null);
 
   useEffect(() => {
-    if (user) {
-      setFormData({
-        name: user.name || '',
-        phone: user.phone || '',
-        vehicleNumber: user.vehicleNumber || '',
-        licenseNumber: user.licenseNumber || '',
-        vehicleModel: user.vehicleModel || '',
-        vehicleColor: user.vehicleColor || '',
-        address: user.address || '',
-      });
+    fetchProfileData();
+  }, []);
+
+  const fetchProfileData = async () => {
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem('authToken');
+      if (!token) {
+        console.log('Error', 'Authentication token not found');
+        navigation.goBack();
+        return;
+      }
+
+      const res = await authService.getProfile(token);
+      if (res.success) {
+        setProfileData(res);
+        setFormData({
+          name: res.user?.name || '',
+          phone: res.user?.phone || '',
+          address: res.user?.address || '',
+          vehicleNumber: res.deliveryAgent?.vehicleNumber || '',
+          panCardNumber: res.deliveryAgent?.panCardNumber || '',
+          aadharCardNumber: res.deliveryAgent?.aadharCardNumber || '',
+          drivingLicence: res.deliveryAgent?.drivingLicence || '',
+          bankDetails: res.deliveryAgent?.bankDetails || '',
+        });
+      } else {
+        console.log('Error', res.error || 'Failed to load profile data');
+      }
+    } catch (error) {
+      console.log('Error', 'Failed to load profile data');
+    } finally {
+      setLoading(false);
     }
-  }, [user]);
+  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -54,7 +81,7 @@ const EditProfileScreen = ({ navigation }) => {
       newErrors.name = 'Name must be at least 2 characters';
     }
 
-    // Phone validation
+    // Phone validation (disabled but still validate if somehow changed)
     if (!formData.phone.trim()) {
       newErrors.phone = 'Phone number is required';
     } else if (!/^[0-9]{10,}$/.test(formData.phone.replace(/\s/g, ''))) {
@@ -68,11 +95,25 @@ const EditProfileScreen = ({ navigation }) => {
       newErrors.vehicleNumber = 'Vehicle number must be at least 5 characters';
     }
 
-    // License number validation
-    if (!formData.licenseNumber.trim()) {
-      newErrors.licenseNumber = 'License number is required';
-    } else if (formData.licenseNumber.trim().length < 5) {
-      newErrors.licenseNumber = 'License number must be at least 5 characters';
+    // PAN validation
+    if (!formData.panCardNumber.trim()) {
+      newErrors.panCardNumber = 'PAN number is required';
+    } else if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.panCardNumber.toUpperCase())) {
+      newErrors.panCardNumber = 'Please enter a valid PAN number';
+    }
+
+    // Aadhar validation
+    if (!formData.aadharCardNumber.trim()) {
+      newErrors.aadharCardNumber = 'Aadhar number is required';
+    } else if (!/^[0-9]{12}$/.test(formData.aadharCardNumber.replace(/\s/g, ''))) {
+      newErrors.aadharCardNumber = 'Please enter a valid 12-digit Aadhar number';
+    }
+
+    // License validation
+    if (!formData.drivingLicence.trim()) {
+      newErrors.drivingLicence = 'Driving license number is required';
+    } else if (formData.drivingLicence.trim().length < 5) {
+      newErrors.drivingLicence = 'Driving license must be at least 5 characters';
     }
 
     setErrors(newErrors);
@@ -94,13 +135,18 @@ const EditProfileScreen = ({ navigation }) => {
     }
   };
 
-  const renderInput = (label, field, placeholder, keyboardType = 'default', required = false, autoCapitalize = 'words', maxLength = null, editable = true) => (
+  const renderInput = (label, field, placeholder, keyboardType = 'default', required = false, autoCapitalize = 'words', maxLength = null, editable = true, multiline = false) => (
     <View style={styles.inputContainer}>
       <Text style={styles.inputLabel}>
         {label} {required && <Text style={styles.required}>*</Text>}
       </Text>
       <TextInput
-        style={[styles.textInput, errors[field] && styles.textInputError, !editable && styles.textInputDisabled]}
+        style={[
+          styles.textInput,
+          errors[field] && styles.textInputError,
+          !editable && styles.textInputDisabled,
+          multiline && styles.textInputMultiline
+        ]}
         value={formData[field]}
         onChangeText={(value) => handleInputChange(field, value)}
         placeholder={placeholder}
@@ -108,12 +154,12 @@ const EditProfileScreen = ({ navigation }) => {
         placeholderTextColor="#717182"
         autoCapitalize={autoCapitalize}
         autoCorrect={false}
-        returnKeyType="next"
+        returnKeyType={multiline ? "default" : "next"}
         clearButtonMode="while-editing"
-        blurOnSubmit={false}
-        multiline={false}
-        numberOfLines={1}
-        textAlignVertical="center"
+        blurOnSubmit={!multiline}
+        multiline={multiline}
+        numberOfLines={multiline ? 4 : 1}
+        textAlignVertical={multiline ? "top" : "center"}
         maxLength={maxLength}
         editable={editable}
       />
@@ -129,20 +175,37 @@ const EditProfileScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
-      const updatedUser = { 
-        ...user, 
-        ...formData,
-        phone: formData.phone.replace(/\s/g, '') // Remove spaces from phone
-      };
-      
-      if (updateUser) {
-        await updateUser(updatedUser);
+      const token = await AsyncStorage.getItem('authToken');
+      if (!token) {
+        console.log('Error', 'Authentication token not found');
+        return;
       }
-      Alert.alert('Success', 'Profile updated successfully', [
-        { text: 'OK', onPress: () => navigation.goBack() },
-      ]);
+
+      const profileUpdateData = {
+        name: formData.name.trim(),
+        phone: formData.phone.replace(/\s/g, ''), // Remove spaces from phone
+        address: formData.address.trim(),
+        vehicleNumber: formData.vehicleNumber.trim(),
+        panCardNumber: formData.panCardNumber.toUpperCase().trim(),
+        aadharCardNumber: formData.aadharCardNumber.replace(/\s/g, '').trim(),
+        drivingLicence: formData.drivingLicence.trim(),
+        bankDetails: formData.bankDetails.trim(),
+        status: 'online', // Default status
+      };
+
+      const result = await authService.updateComprehensiveProfile(token, profileUpdateData);
+
+      if (result.success) {
+        // Alert.alert('Success', 'Profile updated successfully', [
+        //   { text: 'OK', onPress: () =>
+        navigation.goBack()
+        // },
+        // ]);
+      } else {
+        console.log('Error', result.error || 'Failed to update profile. Please try again.');
+      }
     } catch (error) {
-      Alert.alert('Error', 'Failed to update profile. Please try again.');
+      console.log('Error', 'Failed to update profile. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -162,9 +225,20 @@ const EditProfileScreen = ({ navigation }) => {
         <Text style={styles.sectionTitle}>Vehicle Information</Text>
 
         {renderInput('Vehicle Number', 'vehicleNumber', 'Enter vehicle registration number', 'default', true, 'characters')}
-        {renderInput('License Number', 'licenseNumber', 'Enter your driver license number', 'default', true, 'characters')}
-        {renderInput('Vehicle Model', 'vehicleModel', 'Enter vehicle model')}
-        {renderInput('Vehicle Color', 'vehicleColor', 'Enter vehicle color')}
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Document Information</Text>
+
+        {renderInput('PAN Number', 'panCardNumber', 'Enter your PAN number', 'default', true, 'characters', 10)}
+        {renderInput('Aadhar Number', 'aadharCardNumber', 'Enter your Aadhar number', 'numeric', true, 'none', 12)}
+        {renderInput('Driving License', 'drivingLicence', 'Enter your driving license number', 'default', true, 'characters')}
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Bank Details</Text>
+
+        {renderInput('Bank Details', 'bankDetails', 'Enter bank name, account number, IFSC code', 'default', false, 'words', null, true, true)}
       </View>
     </>
   );
@@ -220,8 +294,8 @@ const EditProfileScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
+  container: {
+    flex: 1,
     backgroundColor: '#ffffff' // White background
   },
   keyboardContainer: { flex: 1 },
@@ -236,39 +310,39 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f3f4f6', // Light background border
   },
   backButton: { padding: spacing.sm },
-  headerTitle: { 
-    fontSize: fontSize.lg, 
-    fontWeight: '600', 
+  headerTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: '600',
     color: '#1f2937' // Dark text
   },
-  saveButton: { 
+  saveButton: {
     backgroundColor: '#3b82f6', // Blue
-    paddingHorizontal: spacing.lg, 
-    paddingVertical: spacing.sm, 
-    borderRadius: spacing.sm 
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: spacing.sm
   },
   saveButtonDisabled: { backgroundColor: '#6b7280' }, // Gray when disabled
-  saveButtonText: { 
+  saveButtonText: {
     color: '#ffffff', // White text
-    fontSize: fontSize.sm, 
-    fontWeight: '600' 
+    fontSize: fontSize.sm,
+    fontWeight: '600'
   },
   saveButtonTextDisabled: { color: '#b8b8b8' },
   content: { flex: 1, paddingHorizontal: spacing.xl },
   scrollContent: { paddingBottom: 40 },
   section: { marginTop: spacing.xl },
-  sectionTitle: { 
-    fontSize: fontSize.md, 
-    fontWeight: '600', 
+  sectionTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
     color: '#1f2937', // Dark text
-    marginBottom: spacing.lg 
+    marginBottom: spacing.lg
   },
   inputContainer: { marginBottom: 20 },
-  inputLabel: { 
-    fontSize: fontSize.sm, 
-    fontWeight: '500', 
+  inputLabel: {
+    fontSize: fontSize.sm,
+    fontWeight: '500',
     color: '#1f2937', // Dark text
-    marginBottom: spacing.sm 
+    marginBottom: spacing.sm
   },
   required: { color: '#ef4444' }, // Red
   textInput: {
@@ -288,6 +362,10 @@ const styles = StyleSheet.create({
   textInputDisabled: {
     backgroundColor: '#f3f4f6', // Light background
     color: '#6b7280', // Gray text
+  },
+  textInputMultiline: {
+    minHeight: 100,
+    paddingTop: spacing.md,
   },
   errorText: {
     color: '#ef4444', // Red

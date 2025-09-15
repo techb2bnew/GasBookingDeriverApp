@@ -16,6 +16,8 @@ import OrderCard from '../components/OrderCard';
 import CurrentOrderBanner from '../components/CurrentOrderBanner';
 import CustomAlert from '../components/CustomAlert';
 import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { authService } from '../services/authService';
 
 const DashboardScreen = ({ navigation }) => {
   const { user } = useAuth();
@@ -30,6 +32,9 @@ const DashboardScreen = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [showAcceptAlert, setShowAcceptAlert] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [showStatusAlert, setShowStatusAlert] = useState(false);
+  const [newStatus, setNewStatus] = useState(null);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   useEffect(() => {
     fetchAvailableOrders();
@@ -62,7 +67,7 @@ const DashboardScreen = ({ navigation }) => {
     if (result.success) {
       navigation.navigate('OrderDetail');
     } else {
-      Alert.alert('Error', 'Failed to accept order');
+      console.log('Error', 'Failed to accept order');
     }
     setSelectedOrderId(null);
   };
@@ -70,6 +75,47 @@ const DashboardScreen = ({ navigation }) => {
   const cancelAcceptOrder = () => {
     setShowAcceptAlert(false);
     setSelectedOrderId(null);
+  };
+
+  const handleStatusChange = (newStatus) => {
+    setNewStatus(newStatus);
+    setShowStatusAlert(true);
+  };
+
+  const confirmStatusChange = async () => {
+    setShowStatusAlert(false);
+    setIsUpdatingStatus(true);
+
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      if (!token) {
+        console.log('Error', 'Authentication token not found');
+        return;
+      }
+
+      const result = await authService.updateAgentStatus(token, newStatus);
+
+      if (result.success) {
+        if (newStatus === 'online') {
+          await startLocationTracking();
+        } else {
+          await stopLocationTracking();
+        }
+        // Alert.alert('Success', `Status changed to ${newStatus}`);
+      } else {
+        console.log('Error', result.error || 'Failed to update status');
+      }
+    } catch (error) {
+      console.log('Error', 'Failed to update status');
+    } finally {
+      setIsUpdatingStatus(false);
+      setNewStatus(null);
+    }
+  };
+
+  const cancelStatusChange = () => {
+    setShowStatusAlert(false);
+    setNewStatus(null);
   };
 
   const renderOrderItem = ({ item }) => (
@@ -83,21 +129,20 @@ const DashboardScreen = ({ navigation }) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.greeting}>Hello, {user?.name || 'Driver'}!</Text>
+          <Text style={styles.greeting}>Hello, {user?.name || 'Driver'}</Text>
           <Text style={styles.subtitle}>Ready to deliver?</Text>
         </View>
         <TouchableOpacity
           style={[styles.statusIndicator, isTracking && styles.statusIndicatorActive]}
           onPress={() => {
             if (isTracking) {
-              stopLocationTracking();
-              Alert.alert('Status Changed', 'You are now offline');
+              handleStatusChange('offline');
             } else {
-              startLocationTracking();
-              Alert.alert('Status Changed', 'You are now online');
+              handleStatusChange('online');
             }
           }}
           activeOpacity={0.7}
+          disabled={isUpdatingStatus}
         >
           <View style={[styles.statusDot, isTracking && styles.statusDotActive]} />
           <Text style={[styles.statusText, isTracking && styles.statusTextActive]}>
@@ -153,6 +198,17 @@ const DashboardScreen = ({ navigation }) => {
         onConfirm={confirmAcceptOrder}
         onCancel={cancelAcceptOrder}
       />
+
+      <CustomAlert
+        visible={showStatusAlert}
+        title="Change Status"
+        message={`Are you sure you want to change your status to ${newStatus}?`}
+        type="warning"
+        confirmText="Yes"
+        cancelText="Cancel"
+        onConfirm={confirmStatusChange}
+        onCancel={cancelStatusChange}
+      />
     </View>
   );
 };
@@ -192,6 +248,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.xl,
     borderWidth: 1,
     borderColor: '#3b82f6', // Blue border
+    backgroundColor: "red"
   },
   statusIndicatorActive: {
     backgroundColor: '#10b981', // Green background
@@ -218,7 +275,7 @@ const styles = StyleSheet.create({
   },
   ordersSection: {
     flex: 1,
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing.md,
     marginTop: spacing.md
   },
   sectionHeader: {

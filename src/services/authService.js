@@ -1,58 +1,179 @@
+import { API_ENDPOINTS } from '../utils/constants';
+
 export const authService = {
-  sendOtp: async (phoneNumber) => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // In a real app, you would send OTP via SMS service
-    console.log(`OTP sent to ${phoneNumber}`);
-    
-    return {
-      success: true,
-      message: 'OTP sent successfully',
-    };
+  requestOtp: async (email) => {
+    try {
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/auth/request-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, role: 'agent' }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message = data?.error || 'Failed to send OTP';
+        return { success: false, error: message, statusCode: data?.statusCode || response.status };
+      }
+
+      return { success: true, message: data?.message || 'OTP sent successfully' };
+    } catch (error) {
+      return { success: false, error: error.message || 'Network error' };
+    }
   },
 
-  loginWithOtp: async (phoneNumber, otp) => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Accept any phone number and any 4-digit OTP
-    if (phoneNumber && phoneNumber.length >= 10 && otp && otp.length === 4) {
-      return {
-        success: true,
-        token: 'mock-jwt-token-' + Date.now(),
-        user: {
-          id: Date.now(),
-          name: 'Driver User',
-          phone: phoneNumber,
-        },
-      };
-    } else {
-      throw new Error('Invalid phone number or OTP');
+  verifyOtp: async (email, otp) => {
+    try {
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api${API_ENDPOINTS.AUTH}/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp, role: 'agent' }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message = data?.error || 'Verification failed';
+        return { success: false, error: message, statusCode: data?.statusCode || response.status };
+      }
+
+      // Backend shape:
+      // { success, message, data: { user, token, deliveryAgent } }
+      const token = data?.data?.token ?? data?.token;
+      const user = data?.data?.user ?? data?.user;
+      const deliveryAgent = data?.data?.deliveryAgent;
+      return { success: true, token, user, deliveryAgent };
+    } catch (error) {
+      return { success: false, error: error.message || 'Network error' };
     }
   },
-  
-  logout: async () => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return {success: true};
+
+  logout: async (token) => {
+    try {
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/auth/logout`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message = data?.error || 'Failed to logout';
+        return { success: false, error: message, statusCode: data?.statusCode || response.status };
+      }
+
+      return { success: true, message: data?.message || 'Logged out successfully' };
+    } catch (error) {
+      return { success: false, error: error.message || 'Network error' };
+    }
   },
-  
+
   validateToken: async (token) => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    if (token && token.startsWith('mock-jwt-token-')) {
-      return {
-        success: true,
-        user: {
-          id: Date.now(),
-          name: 'Driver User',
-          phone: '9876543210',
-        },
-      };
+    // TODO: implement with backend if available
+    if (token) {
+      return { success: true };
     }
-    
     throw new Error('Invalid token');
+  },
+
+  getProfile: async (token) => {
+    try {
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/auth/profile`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message = data?.error || 'Failed to fetch profile';
+        return { success: false, error: message, statusCode: data?.statusCode || response.status };
+      }
+
+      // { success, data: { user, deliveryAgent } }
+      return { success: true, user: data?.data?.user, deliveryAgent: data?.data?.deliveryAgent };
+    } catch (error) {
+      return { success: false, error: error.message || 'Network error' };
+    }
+  },
+
+  updateComprehensiveProfile: async (token, profileData) => {
+    try {
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/auth/agent/profile/comprehensive`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(profileData),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message = data?.error || 'Failed to update profile';
+        return { success: false, error: message, statusCode: data?.statusCode || response.status };
+      }
+
+      return { success: true, message: data?.message || 'Profile updated successfully', data: data?.data };
+    } catch (error) {
+      return { success: false, error: error.message || 'Network error' };
+    }
+  },
+
+  updateAgentStatus: async (token, status) => {
+    try {
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/auth/agent/status`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message = data?.error || 'Failed to update status';
+        return { success: false, error: message, statusCode: data?.statusCode || response.status };
+      }
+
+      return { success: true, message: data?.message || 'Status updated successfully', data: data?.data };
+    } catch (error) {
+      return { success: false, error: error.message || 'Network error' };
+    }
+  },
+
+  getOrders: async (token) => {
+    try {
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/orders`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message = data?.error || 'Failed to fetch orders';
+        return { success: false, error: message, statusCode: data?.statusCode || response.status };
+      }
+
+      return { 
+        success: true, 
+        message: data?.message || 'Orders retrieved successfully', 
+        orders: data?.data?.orders || [],
+        pagination: data?.data?.pagination || null
+      };
+    } catch (error) {
+      return { success: false, error: error.message || 'Network error' };
+    }
   },
 };

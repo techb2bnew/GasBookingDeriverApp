@@ -8,15 +8,21 @@ import {
   Alert,
   Modal,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useAuth } from '../context/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { authService } from '../services/authService';
 import { useOrder } from '../context/OrderContext';
-import { fontSize, spacing, borderRadius ,wp,hp} from '../utils/dimensions';
+import { fontSize, spacing, borderRadius, wp, hp } from '../utils/dimensions';
 import CustomAlert from '../components/CustomAlert';
 
 const ProfileScreen = ({ navigation }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const { orderHistory } = useOrder();
+  const [profileUser, setProfileUser] = useState(user);
+  const [deliveryAgent, setDeliveryAgent] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState({
     totalDelivered: 0,
     totalCanceled: 0,
@@ -29,6 +35,38 @@ const ProfileScreen = ({ navigation }) => {
   useEffect(() => {
     calculateStats();
   }, [orderHistory]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchProfile();
+    }, [])
+  );
+
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem('authToken');
+      console.log("token", token);
+
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+      const res = await authService.getProfile(token);
+      console.log("res", res);
+
+      if (res.success) {
+        setProfileUser(res.user);
+        setDeliveryAgent(res.deliveryAgent);
+        // Update AuthContext with fresh user data
+        if (updateUser) {
+          await updateUser(res.user);
+        }
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const calculateStats = () => {
     const delivered = orderHistory.filter(order => order.status === 'delivered').length;
@@ -49,9 +87,24 @@ const ProfileScreen = ({ navigation }) => {
     setShowLogoutAlert(true);
   };
 
-  const confirmLogout = () => {
+  const confirmLogout = async () => {
     setShowLogoutAlert(false);
-    logout();
+    setLoading(true);
+
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      if (token) {
+        // First set status to offline
+        await authService.updateAgentStatus(token, 'offline');
+        // Then logout
+        await authService.logout(token);
+      }
+    } catch (error) {
+      console.log('Error during logout:', error);
+    } finally {
+      setLoading(false);
+      logout();
+    }
   };
 
   const cancelLogout = () => {
@@ -65,7 +118,7 @@ const ProfileScreen = ({ navigation }) => {
   const confirmDeleteAccount = () => {
     setShowDeleteAlert(false);
     // Here you would typically make an API call to delete the account
-    Alert.alert('Account Deleted', 'Your account has been successfully deleted.');
+    // Alert.alert('Account Deleted', 'Your account has been successfully deleted.');
     logout();
   };
 
@@ -77,6 +130,14 @@ const ProfileScreen = ({ navigation }) => {
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Profile</Text>
+        <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.editButton} onPress={() => navigation.navigate('EditProfile')}>
+            <Icon name="edit" size={20} color="black" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <Icon name="power-settings-new" size={20} color="#ffffff" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.profileSection}>
@@ -86,14 +147,20 @@ const ProfileScreen = ({ navigation }) => {
           <View style={styles.avatarContainer}>
             <View style={styles.avatarOuter}>
               <View style={styles.avatar}>
-                <Icon name="person" size={40} color="#ffffff" />
+                {profileUser?.name ? (
+                  <Text style={styles.avatarLetter}>
+                    {profileUser.name.charAt(0).toUpperCase()}
+                  </Text>
+                ) : (
+                  <Icon name="person" size={40} color="#ffffff" />
+                )}
               </View>
             </View>
           </View>
 
           <View style={styles.profileInfo}>
-            <Text style={styles.driverName}>{user?.name || 'Driver Name'}</Text>
-            <Text style={styles.driverEmail}>{user?.phone}</Text>
+            <Text style={styles.driverName}>{profileUser?.name || 'Driver Name'}</Text>
+            <Text style={styles.driverEmail}>{profileUser?.email}</Text>
             <View style={styles.ratingContainer}>
               <Icon name="star" size={16} color="#fbbf24" />
               <Text style={styles.rating}>{stats.rating}</Text>
@@ -118,7 +185,18 @@ const ProfileScreen = ({ navigation }) => {
                 <View style={styles.infoText}>
                   <Text style={styles.infoLabel}>Phone Number</Text>
                   <Text style={styles.infoValue}>
-                    {user?.phone || 'Not added'}
+                    {profileUser?.phone || 'Not added'}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.infoRow}>
+                <View style={styles.infoIcon}>
+                  <Icon name="email" size={16} color="#717182" />
+                </View>
+                <View style={styles.infoText}>
+                  <Text style={styles.infoLabel}>Email</Text>
+                  <Text style={styles.infoValue}>
+                    {profileUser?.email || 'Not added'}
                   </Text>
                 </View>
               </View>
@@ -129,7 +207,40 @@ const ProfileScreen = ({ navigation }) => {
                 <View style={styles.infoText}>
                   <Text style={styles.infoLabel}>Address</Text>
                   <Text style={styles.infoValue}>
-                    {user?.address || 'Not added'}
+                    {profileUser?.address || 'Not added'}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.infoRow}>
+                <View style={styles.infoIcon}>
+                  <Icon name="credit-card" size={16} color="#717182" />
+                </View>
+                <View style={styles.infoText}>
+                  <Text style={styles.infoLabel}>PAN</Text>
+                  <Text style={styles.infoValue}>
+                    {deliveryAgent?.panCardNumber || 'Not added'}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.infoRow}>
+                <View style={styles.infoIcon}>
+                  <Icon name="badge" size={16} color="#717182" />
+                </View>
+                <View style={styles.infoText}>
+                  <Text style={styles.infoLabel}>Aadhar</Text>
+                  <Text style={styles.infoValue}>
+                    {deliveryAgent?.aadharCardNumber || 'Not added'}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.infoRow}>
+                <View style={styles.infoIcon}>
+                  <Icon name="drive-eta" size={16} color="#717182" />
+                </View>
+                <View style={styles.infoText}>
+                  <Text style={styles.infoLabel}>License Number</Text>
+                  <Text style={styles.infoValue}>
+                    {deliveryAgent?.drivingLicence || 'Not added'}
                   </Text>
                 </View>
               </View>
@@ -150,40 +261,62 @@ const ProfileScreen = ({ navigation }) => {
                 <View style={styles.infoText}>
                   <Text style={styles.infoLabel}>Vehicle Number</Text>
                   <Text style={styles.infoValue}>
-                    {user?.vehicleNumber || 'Not added'}
+                    {deliveryAgent?.vehicleNumber || 'Not added'}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* Bank Details Card */}
+          <View style={styles.infoCard}>
+            <View style={styles.cardHeader}>
+              <Icon name="account-balance" size={20} color="#030213" />
+              <Text style={styles.cardTitle}>Bank Details</Text>
+            </View>
+            <View style={styles.cardContent}>
+              <View style={styles.infoRow}>
+                <View style={styles.infoIcon}>
+                  <Icon name="account-balance" size={16} color="#717182" />
+                </View>
+                <View style={styles.infoText}>
+                  <Text style={styles.infoLabel}>Bank Details</Text>
+                  <Text style={styles.infoValue}>
+                    {deliveryAgent?.bankDetails || 'Not added'}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* Status Information Card */}
+          <View style={styles.infoCard}>
+            <View style={styles.cardHeader}>
+              <Icon name="info-outline" size={20} color="#030213" />
+              <Text style={styles.cardTitle}>Status Information</Text>
+            </View>
+            <View style={styles.cardContent}>
+              <View style={styles.infoRow}>
+                <View style={styles.infoIcon}>
+                  <Icon name="check-circle" size={16} color={deliveryAgent?.status === "online" ? "#10b981" : "#717182"} />
+                </View>
+                <View style={styles.infoText}>
+                  <Text style={styles.infoLabel}>Status</Text>
+                  <Text style={styles.infoValue}>
+                    {deliveryAgent?.status || 'Active'}
                   </Text>
                 </View>
               </View>
               <View style={styles.infoRow}>
                 <View style={styles.infoIcon}>
-                  <Icon name="badge" size={16} color="#717182" />
+                  <Icon name="calendar-today" size={16} color="#717182" />
                 </View>
                 <View style={styles.infoText}>
-                  <Text style={styles.infoLabel}>License Number</Text>
+                  <Text style={styles.infoLabel}>Joined Date</Text>
                   <Text style={styles.infoValue}>
-                    {user?.licenseNumber || 'Not added'}
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.infoRow}>
-                <View style={styles.infoIcon}>
-                  <Icon name="build" size={16} color="#717182" />
-                </View>
-                <View style={styles.infoText}>
-                  <Text style={styles.infoLabel}>Vehicle Model</Text>
-                  <Text style={styles.infoValue}>
-                    {user?.vehicleModel || 'Not added'}
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.infoRow}>
-                <View style={styles.infoIcon}>
-                  <Icon name="palette" size={16} color="#717182" />
-                </View>
-                <View style={styles.infoText}>
-                  <Text style={styles.infoLabel}>Vehicle Color</Text>
-                  <Text style={styles.infoValue}>
-                    {user?.vehicleColor || 'Not added'}
+                    {deliveryAgent?.joinedAt
+                      ? new Date(deliveryAgent.joinedAt).toLocaleDateString('en-GB')
+                      : 'Not available'}
                   </Text>
                 </View>
               </View>
@@ -282,11 +415,47 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.md,
     paddingBottom: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: "#3b82f6",
   },
   headerTitle: {
     fontSize: fontSize.xl,
     fontWeight: '600',
-    color: '#1f2937', // Dark text
+    color: "white", // Dark text
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerActionText: {
+    fontSize: fontSize.md,
+    color: '#3b82f6',
+    fontWeight: '600',
+  },
+  editButton: {
+    backgroundColor: 'white',
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  editButtonText: {
+    fontSize: fontSize.sm,
+    color: '#ffffff',
+    fontWeight: '600',
+  },
+  logoutButton: {
+    backgroundColor: '#ef4444',
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginLeft: 12,
+  },
+  logoutButtonText: {
+    fontSize: fontSize.sm,
+    color: '#ffffff',
+    fontWeight: '600',
   },
   profileSection: {
     paddingVertical: spacing.xl,
@@ -329,6 +498,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: spacing.xs,
     elevation: 3,
+  },
+  avatarLetter: {
+    color: '#fff',
+    fontSize: spacing.xl,
+    fontWeight: 'bold',
   },
   avatarBadge: {
     position: 'absolute',
@@ -379,7 +553,7 @@ const styles = StyleSheet.create({
   infoCard: {
     backgroundColor: '#ffffff', // White background
     borderRadius: spacing.lg,
-    marginBottom: spacing.lg,
+    marginTop: spacing.lg,
     shadowColor: '#1f2937', // Dark shadow
     shadowOffset: {
       width: 0,

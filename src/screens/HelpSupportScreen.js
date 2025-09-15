@@ -9,7 +9,7 @@ import {
   Linking,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { fontSize, spacing, borderRadius,wp,hp } from '../utils/dimensions';
+import { fontSize, spacing, borderRadius, wp, hp } from '../utils/dimensions';
 
 const HelpSupportScreen = ({ navigation }) => {
   const [expandedFaq, setExpandedFaq] = useState(null);
@@ -129,7 +129,9 @@ const HelpSupportScreen = ({ navigation }) => {
         <Text style={styles.contactTitle}>{option.title}</Text>
         <Text style={styles.contactSubtitle}>{option.subtitle}</Text>
       </View>
-      <Icon name="chevron-right" size={20} color="#717182" />
+      <View>
+        <Icon name="chevron-right" size={20} color="#717182" />
+      </View>
     </TouchableOpacity>
   );
 
@@ -243,14 +245,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: spacing.md,
   },
-  contactText: {
-    flex: 1,
-  },
+  // contactText: {
+  //   flex: 1,
+  // },
   contactTitle: {
     fontSize: fontSize.md,
     fontWeight: '500',
     color: '#030213',
-    marginBottom: 2,
+    // marginBottom: 2,
   },
   contactSubtitle: {
     fontSize: fontSize.sm,
@@ -348,6 +350,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6b7280', // Gray text
     marginLeft: 12,
+    width: "70%"
   },
   contactButton: {
     backgroundColor: '#3b82f6', // Blue

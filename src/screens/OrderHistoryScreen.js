@@ -160,16 +160,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.md,
     paddingBottom: spacing.lg,
+    backgroundColor: "#3b82f6",
   },
   headerTitle: {
     fontSize: fontSize.xl,
     fontWeight: '600',
-    color: '#1f2937', // Dark text
+    color: 'white', // Dark text
   },
   filterContainer: {
     flexDirection: 'row',
     paddingHorizontal: spacing.xl,
-    marginBottom: spacing.lg,
+    marginVertical: spacing.lg,
   },
   filterButton: {
     paddingHorizontal: spacing.lg,

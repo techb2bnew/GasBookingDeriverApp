@@ -8,12 +8,16 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  ScrollView,
+  Keyboard,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import OTPTextInput from 'react-native-otp-textinput';
 import { useAuth } from '../context/AuthContext';
 import { authService } from '../services/authService';
-import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
+import { wp, hp, fontSize, spacing, borderRadius, widthPercentageToDP, heightPercentageToDP } from '../utils/dimensions';
+import { SUPPORT_CONTACT } from '../utils/constants';
+import { Modal, Linking } from 'react-native';
 
 const LoginScreen = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -22,6 +26,11 @@ const LoginScreen = () => {
   const [errors, setErrors] = useState({ phone: '', otp: '', server: '' });
   const [resendTimer, setResendTimer] = useState(0);
   const [isResendDisabled, setIsResendDisabled] = useState(false);
+  const [showSupport, setShowSupport] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [resendingOtp, setResendingOtp] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const { login, loading } = useAuth();
 
   useEffect(() => {
@@ -40,14 +49,28 @@ const LoginScreen = () => {
     return () => clearInterval(interval);
   }, [resendTimer]);
 
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
+      setKeyboardVisible(true);
+    });
+    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardVisible(false);
+    });
+
+    return () => {
+      keyboardDidHideListener?.remove();
+      keyboardDidShowListener?.remove();
+    };
+  }, []);
+
   const validatePhone = () => {
     let nextErrors = { phone: '', otp: '', server: '' };
-    const phoneRegex = /^[0-9]{10,}$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!phoneNumber) {
-      nextErrors.phone = 'Phone number is required';
-    } else if (!phoneRegex.test(phoneNumber)) {
-      nextErrors.phone = 'Enter a valid phone number (minimum 10 digits)';
+      nextErrors.phone = 'Email is required';
+    } else if (!emailRegex.test(phoneNumber)) {
+      nextErrors.phone = 'Enter a valid email address';
     }
 
     setErrors(nextErrors);
@@ -57,8 +80,8 @@ const LoginScreen = () => {
   const validateOtp = () => {
     let nextErrors = { phone: '', otp: '', server: '' };
 
-    if (!otp || otp.length !== 4) {
-      nextErrors.otp = 'Please enter 4-digit OTP';
+    if (!otp || otp.length !== 6) {
+      nextErrors.otp = 'Please enter 6-digit OTP';
     }
 
     setErrors(nextErrors);
@@ -70,13 +93,18 @@ const LoginScreen = () => {
     setErrors(prev => ({ ...prev, server: '' }));
 
     try {
-      const result = await authService.sendOtp(phoneNumber);
+      setSendingOtp(true);
+      const result = await authService.requestOtp(phoneNumber);
       if (result.success) {
         setShowOtpInput(true);
         // Don't start timer on initial send
+      } else {
+        setErrors(prev => ({ ...prev, server: result.error || 'Failed to send OTP. Try again.' }));
       }
     } catch (error) {
       setErrors(prev => ({ ...prev, server: 'Failed to send OTP. Try again.' }));
+    } finally {
+      setSendingOtp(false);
     }
   };
 
@@ -85,12 +113,15 @@ const LoginScreen = () => {
     setErrors(prev => ({ ...prev, server: '' }));
 
     try {
+      setVerifyingOtp(true);
       const result = await login(phoneNumber, otp);
       if (!result.success) {
         setErrors(prev => ({ ...prev, server: result.error || 'Invalid OTP. Try again.' }));
       }
     } catch (error) {
       setErrors(prev => ({ ...prev, server: 'Verification failed. Try again.' }));
+    } finally {
+      setVerifyingOtp(false);
     }
   };
 
@@ -100,13 +131,18 @@ const LoginScreen = () => {
     setErrors(prev => ({ ...prev, server: '' }));
 
     try {
-      const result = await authService.sendOtp(phoneNumber);
+      setResendingOtp(true);
+      const result = await authService.requestOtp(phoneNumber);
       if (result.success) {
         setResendTimer(30); // 30 seconds timer
         setIsResendDisabled(true);
+      } else {
+        setErrors(prev => ({ ...prev, server: result.error || 'Failed to resend OTP. Try again.' }));
       }
     } catch (error) {
       setErrors(prev => ({ ...prev, server: 'Failed to resend OTP. Try again.' }));
+    } finally {
+      setResendingOtp(false);
     }
   };
 
@@ -127,9 +163,15 @@ const LoginScreen = () => {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
       <View style={styles.backgroundGradient} />
-      <View style={styles.content}>
+      <ScrollView 
+        style={styles.scrollContainer}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}>
+        <View style={styles.content}>
         {showOtpInput && <TouchableOpacity
           style={styles.backButton}
           onPress={handleBackToPhone}>
@@ -148,28 +190,34 @@ const LoginScreen = () => {
           {!showOtpInput ? (
             <>
               <View style={[styles.inputContainer, errors.phone ? styles.inputError : null]}>
-                <Icon name="phone" size={20} color={errors.phone ? '#ef4444' : '#6b7280'} style={styles.inputIcon} />
+                <Icon name="email" size={20} color={errors.phone ? '#ef4444' : '#6b7280'} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Phone Number"
+                  placeholder="Email"
                   placeholderTextColor="#6b7280"
                   value={phoneNumber}
                   onChangeText={(text) => {
-                    setPhoneNumber(text.replace(/[^0-9]/g, ''));
+                    setPhoneNumber(text);
                     if (errors.phone) setErrors(prev => ({ ...prev, phone: '' }));
                   }}
-                  keyboardType="phone-pad"
-                  maxLength={10}
+                  keyboardType="email-address"
                   returnKeyType="done"
+                  autoCapitalize="none"
+                  autoCorrect={false}
                 />
               </View>
               {Boolean(errors.phone) && <Text style={styles.fieldError}>{errors.phone}</Text>}
-
+              {Boolean(errors.server) && (
+                <View style={styles.errorBanner}>
+                  <Icon name="error-outline" size={18} color="#ef4444" />
+                  <Text style={styles.errorBannerText}>{errors.server}</Text>
+                </View>
+              )}
               <TouchableOpacity
-                style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+                style={[styles.loginButton, (loading || sendingOtp) && styles.loginButtonDisabled]}
                 onPress={handleSendOtp}
-                disabled={loading}>
-                {loading ? (
+                disabled={loading || sendingOtp}>
+                {sendingOtp ? (
                   <ActivityIndicator color="#ffffff" />
                 ) : (
                   <Text style={styles.loginButtonText}>Send OTP</Text>
@@ -180,8 +228,8 @@ const LoginScreen = () => {
             <>
               <View style={styles.otpSection}>
                 <Text style={styles.otpLabel}>
-                  We've sent a 4-digit code to {'\n'}
-                  <Text style={styles.phoneHighlight}>+91 {phoneNumber}</Text>
+                  We've sent a 6-digit code to {'\n'}
+                  <Text style={styles.phoneHighlight}>{phoneNumber}</Text>
                 </Text>
 
                 <View style={styles.otpInputWrapper}>
@@ -197,17 +245,22 @@ const LoginScreen = () => {
                     defaultValue=""
                     keyboardType="numeric"
                     autoFocus={true}
-                    inputCount={4}
+                    inputCount={6}
                   />
                 </View>
 
                 {Boolean(errors.otp) && <Text style={styles.fieldError}>{errors.otp}</Text>}
-
+                {Boolean(errors.server) && (
+                  <View style={styles.errorBanner}>
+                    <Icon name="error-outline" size={18} color="#ef4444" />
+                    <Text style={styles.errorBannerText}>{errors.server}</Text>
+                  </View>
+                )}
                 <TouchableOpacity
-                  style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+                  style={[styles.loginButton, (loading || verifyingOtp) && styles.loginButtonDisabled]}
                   onPress={handleVerifyOtp}
-                  disabled={loading}>
-                  {loading ? (
+                  disabled={loading || verifyingOtp}>
+                  {verifyingOtp ? (
                     <ActivityIndicator color="#ffffff" />
                   ) : (
                     <Text style={styles.loginButtonText}>Verify & Continue</Text>
@@ -222,8 +275,12 @@ const LoginScreen = () => {
                     <TouchableOpacity
                       style={styles.resendButton}
                       onPress={handleResendOtp}
-                      disabled={loading}>
-                      <Text style={styles.resendButtonText}>Resend</Text>
+                      disabled={loading || resendingOtp}>
+                      {resendingOtp ? (
+                        <ActivityIndicator color="#3b82f6" />
+                      ) : (
+                        <Text style={styles.resendButtonText}>Resend</Text>
+                      )}
                     </TouchableOpacity>
                   )}
                 </View>
@@ -231,17 +288,38 @@ const LoginScreen = () => {
             </>
           )}
 
-          {Boolean(errors.server) && (
-            <View style={styles.errorBanner}>
-              <Icon name="error-outline" size={18} color="#ef4444" />
-              <Text style={styles.errorBannerText}>{errors.server}</Text>
-            </View>
-          )}
+
         </View>
-        {/* <View style={styles.footer}>
-          <Text style={styles.footerText}>© 2023 Gas Delivery. All rights reserved.</Text>
-        </View> */}
       </View>
+      {/* Contact Support Button */}
+      <View style={styles.supportFooter}>
+        <TouchableOpacity onPress={() => setShowSupport(true)}>
+          <Text style={styles.supportText}>Contact Support</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Support Modal */}
+      <Modal
+        visible={showSupport}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowSupport(false)}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Need help?</Text>
+            <TouchableOpacity onPress={() => Linking.openURL(`mailto:${SUPPORT_CONTACT.EMAIL}`)}>
+              <Text style={styles.modalLink}>{SUPPORT_CONTACT.EMAIL}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => Linking.openURL(`tel:${SUPPORT_CONTACT.PHONE}`)}>
+              <Text style={styles.modalLink}>{SUPPORT_CONTACT.PHONE}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.modalClose} onPress={() => setShowSupport(false)}>
+              <Text style={styles.modalCloseText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 };
@@ -250,6 +328,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#ffffff' // White background
+  },
+  scrollContainer: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingBottom: 50,
   },
   backgroundGradient: {
     position: 'absolute',
@@ -261,19 +347,19 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
-    alignContent: "center",
     paddingHorizontal: spacing.xl,
   },
   header: {
     alignItems: 'center',
-    paddingBottom: 40,
+    height: hp(45),
+    alignItems: "center",
+    justifyContent: "center"
   },
   logoContainer: {
     width: wp('30%'),
     height: wp('30%'),
     borderRadius: wp('15%'),
-    backgroundColor: '#3b82f6', // Blue
+    backgroundColor: '#3b82f6',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.xl,
@@ -456,7 +542,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#d1d5db', // Lighter border
     borderRadius: borderRadius.md,
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '600',
     color: '#1f2937', // Dark text
     backgroundColor: '#ffffff', // White background
@@ -513,6 +599,56 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     color: '#9ca3af', // Light gray
     textAlign: 'center',
+  },
+  supportFooter: {
+    position: 'absolute',
+    bottom: 20,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  supportText: {
+    color: '#3b82f6',
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCard: {
+    width: '80%',
+    backgroundColor: '#ffffff',
+    borderRadius: borderRadius.lg || 16,
+    padding: spacing.xl,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: fontSize.lg,
+    color: '#1f2937',
+    fontWeight: '700',
+    marginBottom: spacing.md,
+  },
+  modalLink: {
+    color: '#3b82f6',
+    fontSize: fontSize.md,
+    marginVertical: spacing.xs,
+    textDecorationLine: 'underline',
+  },
+  modalClose: {
+    marginTop: spacing.lg,
+    backgroundColor: '#3b82f6',
+    paddingVertical: Platform.OS === 'ios' ? 10 : 8,
+    paddingHorizontal: 24,
+    borderRadius: borderRadius.xl,
+  },
+  modalCloseText: {
+    color: '#ffffff',
+    fontSize: fontSize.sm,
+    fontWeight: '600',
   }
 });
 

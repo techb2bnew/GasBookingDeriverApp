@@ -121,13 +121,21 @@ export const SUCCESS_MESSAGES = {
 };
 
 export const API_ENDPOINTS = {
-  BASE_URL: 'https://api.gasdelivery.com',
+  BASE_URL: 'https://f3f3d35eb2b3.ngrok-free.app',
   ORDERS: '/orders',
   PROFILE: '/profile',
   AUTH: '/auth',
   PAYMENTS: '/payments',
   NOTIFICATIONS: '/notifications',
   SUPPORT: '/support',
+};
+
+export const SUPPORT_EMAIL = 'support@example.com';
+export const SUPPORT_PHONE = '+91-9999999999';
+
+export const SUPPORT_CONTACT = {
+  EMAIL: SUPPORT_EMAIL,
+  PHONE: SUPPORT_PHONE,
 };
 
 export const STORAGE_KEYS = {
