@@ -226,9 +226,11 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.lg,
+     paddingTop: spacing.md,
+    paddingBottom: spacing.xl,
     backgroundColor: "#3b82f6",
+    borderBottomLeftRadius: borderRadius.xl,
+    borderBottomRightRadius: borderRadius.xl,
   },
   headerTitle: {
     fontSize: fontSize.xl,

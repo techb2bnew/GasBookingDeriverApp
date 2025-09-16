@@ -18,7 +18,7 @@ const DriverAgreementScreen = ({ navigation }) => {
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}>
-          <Icon name="arrow-back" size={24} color="#030213" />
+          <Icon name="arrow-back" size={24} color="#ffffff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Driver Agreement</Text>
         <View style={styles.headerRight} />
@@ -109,9 +109,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.md,
-    paddingBottom: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6', // Light background border
+    paddingBottom: spacing.xl,
+    backgroundColor: "#3b82f6",
+    borderBottomLeftRadius: borderRadius.xl,
+    borderBottomRightRadius: borderRadius.xl,
   },
   backButton: {
     padding: spacing.sm,
@@ -119,7 +120,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
-    color: '#1f2937', // Dark text
+    color: '#ffffff', // White text
   },
   headerRight: {
     width: wp('10%'),

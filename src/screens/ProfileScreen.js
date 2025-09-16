@@ -414,11 +414,13 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.md,
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.xl,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: "#3b82f6",
+    borderBottomLeftRadius: borderRadius.xl,
+    borderBottomRightRadius: borderRadius.xl,
   },
   headerTitle: {
     fontSize: fontSize.xl,
@@ -459,6 +461,7 @@ const styles = StyleSheet.create({
   },
   profileSection: {
     paddingVertical: spacing.xl,
+    marginTop:10
   },
   profileHeader: {
     flexDirection: 'row',
