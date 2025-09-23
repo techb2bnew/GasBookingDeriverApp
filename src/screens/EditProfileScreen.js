@@ -141,12 +141,12 @@ const EditProfileScreen = ({ navigation }) => {
         {label} {required && <Text style={styles.required}>*</Text>}
       </Text>
       <TextInput
-        style={[
-          styles.textInput,
-          errors[field] && styles.textInputError,
-          !editable && styles.textInputDisabled,
-          multiline && styles.textInputMultiline
-        ]}
+        // style={[
+        //   styles.textInput,
+        //   errors[field] && styles.textInputError,
+        //   !editable && styles.textInputDisabled,
+        //   multiline && styles.textInputMultiline
+        // ]}
         value={formData[field]}
         onChangeText={(value) => handleInputChange(field, value)}
         placeholder={placeholder}
@@ -161,7 +161,7 @@ const EditProfileScreen = ({ navigation }) => {
         numberOfLines={multiline ? 4 : 1}
         textAlignVertical={multiline ? "top" : "center"}
         maxLength={maxLength}
-        editable={editable}
+        // editable={editable}
       />
       {errors[field] && <Text style={styles.errorText}>{errors[field]}</Text>}
     </View>
@@ -196,16 +196,14 @@ const EditProfileScreen = ({ navigation }) => {
       const result = await authService.updateComprehensiveProfile(token, profileUpdateData);
 
       if (result.success) {
-        // Alert.alert('Success', 'Profile updated successfully', [
-        //   { text: 'OK', onPress: () =>
-        navigation.goBack()
-        // },
-        // ]);
+        Alert.alert('Success', 'Profile updated successfully', [
+          { text: 'OK', onPress: () => navigation.goBack() }
+        ]);
       } else {
-        console.log('Error', result.error || 'Failed to update profile. Please try again.');
+        Alert.alert('Error', result.error || 'Failed to update profile. Please try again.');
       }
     } catch (error) {
-      console.log('Error', 'Failed to update profile. Please try again.');
+      Alert.alert('Error', 'Failed to update profile. Please try again.');
     } finally {
       setLoading(false);
     }

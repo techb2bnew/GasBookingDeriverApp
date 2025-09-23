@@ -7,6 +7,7 @@ const AuthContext = createContext();
 const initialState = {
   isAuthenticated: false,
   user: null,
+  deliveryAgent: null,
   loading: true,
 };
 
@@ -16,19 +17,22 @@ const authReducer = (state, action) => {
       return {
         ...state,
         isAuthenticated: true,
-        user: action.payload,
+        user: action.payload.user,
+        deliveryAgent: action.payload.deliveryAgent,
         loading: false,
       };
     case 'UPDATE_USER':
       return {
         ...state,
-        user: action.payload,
+        user: action.payload.user,
+        deliveryAgent: action.payload.deliveryAgent,
       };
     case 'LOGOUT':
       return {
         ...state,
         isAuthenticated: false,
         user: null,
+        deliveryAgent: null,
         loading: false,
       };
     case 'SET_LOADING':
@@ -54,9 +58,14 @@ export const AuthProvider = ({children}) => {
       const userData = await AsyncStorage.getItem('userData');
       
       if (token && userData) {
+        const parsedUserData = JSON.parse(userData);
+        const deliveryAgentData = await AsyncStorage.getItem('deliveryAgent');
         dispatch({
           type: 'LOGIN_SUCCESS',
-          payload: JSON.parse(userData),
+          payload: {
+            user: parsedUserData,
+            deliveryAgent: deliveryAgentData ? JSON.parse(deliveryAgentData) : null,
+          },
         });
       } else {
         dispatch({type: 'SET_LOADING', payload: false});
@@ -80,7 +89,10 @@ export const AuthProvider = ({children}) => {
         
         dispatch({
           type: 'LOGIN_SUCCESS',
-          payload: response.user,
+          payload: {
+            user: response.user,
+            deliveryAgent: response.deliveryAgent,
+          },
         });
         
         return {success: true};
@@ -98,6 +110,7 @@ export const AuthProvider = ({children}) => {
     try {
       await AsyncStorage.removeItem('authToken');
       await AsyncStorage.removeItem('userData');
+      await AsyncStorage.removeItem('deliveryAgent');
       dispatch({type: 'LOGOUT'});
     } catch (error) {
       console.error('Logout error:', error);
@@ -108,7 +121,10 @@ export const AuthProvider = ({children}) => {
     try {
       // Here you would typically make an API call to update the user profile
       // For now, we'll just update the local storage and state
-      await AsyncStorage.setItem('userData', JSON.stringify(updatedUserData));
+      await AsyncStorage.setItem('userData', JSON.stringify(updatedUserData.user));
+      if (updatedUserData.deliveryAgent) {
+        await AsyncStorage.setItem('deliveryAgent', JSON.stringify(updatedUserData.deliveryAgent));
+      }
       dispatch({type: 'UPDATE_USER', payload: updatedUserData});
       return {success: true};
     } catch (error) {

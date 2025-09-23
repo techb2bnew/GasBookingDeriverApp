@@ -20,7 +20,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService } from '../services/authService';
 
 const DashboardScreen = ({ navigation }) => {
-  const { user } = useAuth();
+  const { user, deliveryAgent, updateUser } = useAuth();
   const {
     availableOrders,
     currentOrder,
@@ -38,6 +38,7 @@ const DashboardScreen = ({ navigation }) => {
 
   useEffect(() => {
     fetchAvailableOrders();
+    fetchLatestProfile();
 
     (async () => {
       if (!isTracking) {
@@ -49,6 +50,20 @@ const DashboardScreen = ({ navigation }) => {
       }
     })();
   }, []);
+
+  const fetchLatestProfile = async () => {
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      if (token) {
+        const result = await authService.getProfile(token);
+        if (result.success) {
+          await updateUser({ user: result.user, deliveryAgent: result.deliveryAgent });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch latest profile:', error);
+    }
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -101,6 +116,10 @@ const DashboardScreen = ({ navigation }) => {
       const result = await authService.updateAgentStatus(token, newStatus);
 
       if (result.success) {
+        // Update the deliveryAgent status in context
+        const updatedDeliveryAgent = { ...deliveryAgent, status: newStatus };
+        await updateUser({ user, deliveryAgent: updatedDeliveryAgent });
+        
         if (newStatus === 'online') {
           await startLocationTracking();
         } else {
@@ -138,9 +157,9 @@ const DashboardScreen = ({ navigation }) => {
           <Text style={styles.subtitle}>Ready to deliver?</Text>
         </View>
         <TouchableOpacity
-          style={[styles.statusIndicator, isTracking && styles.statusIndicatorActive]}
+          style={[styles.statusIndicator, deliveryAgent?.status === 'online' && styles.statusIndicatorActive]}
           onPress={() => {
-            if (isTracking) {
+            if (deliveryAgent?.status === 'online') {
               handleStatusChange('offline');
             } else {
               handleStatusChange('online');
@@ -149,9 +168,9 @@ const DashboardScreen = ({ navigation }) => {
           activeOpacity={0.7}
           disabled={isUpdatingStatus}
         >
-          <View style={[styles.statusDot, isTracking && styles.statusDotActive]} />
-          <Text style={[styles.statusText, isTracking && styles.statusTextActive]}>
-            {isTracking ? 'Online' : 'Offline'}
+          <View style={[styles.statusDot, deliveryAgent?.status === 'online' && styles.statusDotActive]} />
+          <Text style={[styles.statusText, deliveryAgent?.status === 'online' && styles.statusTextActive]}>
+            {deliveryAgent?.status === 'online' ? 'Online' : 'Offline'}
           </Text>
         </TouchableOpacity>
       </View>
