@@ -126,6 +126,45 @@ export const authService = {
     }
   },
 
+  updateProfileWithImage: async (token, profileData, imageAsset) => {
+    try {
+      const formData = new FormData();
+      
+      // Add profile data
+      Object.keys(profileData).forEach(key => {
+        formData.append(key, profileData[key]);
+      });
+
+      // Add image with key 'image'
+      if (imageAsset) {
+        formData.append('image', {
+          uri: imageAsset.uri,
+          type: imageAsset.type || 'image/jpeg',
+          name: imageAsset.fileName || 'profile.jpg',
+        });
+      }
+
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/auth/agent/profile/comprehensive`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message = data?.error || 'Failed to update profile';
+        return { success: false, error: message, statusCode: data?.statusCode || response.status };
+      }
+
+      return { success: true, message: data?.message || 'Profile updated successfully', data: data?.data };
+    } catch (error) {
+      return { success: false, error: error.message || 'Network error' };
+    }
+  },
+
   updateAgentStatus: async (token, status) => {
     try {
       const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/auth/agent/status`, {
@@ -171,6 +210,59 @@ export const authService = {
         message: data?.message || 'Orders retrieved successfully', 
         orders: data?.data?.orders || [],
         pagination: data?.data?.pagination || null
+      };
+    } catch (error) {
+      return { success: false, error: error.message || 'Network error' };
+    }
+  },
+
+  getActiveOrders: async (token) => {
+    try {
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/orders?status=out_for_delivery`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message = data?.error || 'Failed to fetch active orders';
+        return { success: false, error: message, statusCode: data?.statusCode || response.status };
+      }
+
+      return { 
+        success: true, 
+        message: data?.message || 'Active orders retrieved successfully', 
+        orders: data?.data?.orders || [],
+        pagination: data?.data?.pagination || null
+      };
+    } catch (error) {
+      return { success: false, error: error.message || 'Network error' };
+    }
+  },
+
+  getOrderById: async (token, orderId) => {
+    try {
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/orders/${orderId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message = data?.error || 'Failed to fetch order details';
+        return { success: false, error: message, statusCode: data?.statusCode || response.status };
+      }
+
+      return { 
+        success: true, 
+        message: data?.message || 'Order details retrieved successfully', 
+        order: data?.data?.order || null
       };
     } catch (error) {
       return { success: false, error: error.message || 'Network error' };
@@ -274,6 +366,53 @@ export const authService = {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ otp }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message = data?.error || 'Failed to verify OTP';
+        return { success: false, error: message, statusCode: data?.statusCode || response.status };
+      }
+
+      return { 
+        success: true, 
+        message: data?.message || 'OTP verified successfully',
+        order: data?.data?.order || data?.order
+      };
+    } catch (error) {
+      return { success: false, error: error.message || 'Network error' };
+    }
+  },
+
+  verifyDeliveryOtpWithProof: async (token, orderId, otp, deliveryNote, paymentReceived, deliveryProofImage) => {
+    try {
+      const formData = new FormData();
+      
+      // Add OTP
+      formData.append('otp', otp);
+      
+      // Add delivery note
+      formData.append('deliveryNote', deliveryNote || '');
+      
+      // Add payment received status
+      formData.append('paymentReceived', paymentReceived.toString());
+      
+      // Add delivery proof image if provided
+      if (deliveryProofImage) {
+        formData.append('deliveryProof', {
+          uri: deliveryProofImage.uri,
+          type: deliveryProofImage.type || 'image/jpeg',
+          name: deliveryProofImage.fileName || 'delivery_proof.jpg',
+        });
+      }
+
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/orders/${orderId}/verify-otp`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
       });
 
       const data = await response.json().catch(() => ({}));

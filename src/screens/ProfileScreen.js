@@ -7,6 +7,7 @@ import {
   ScrollView,
   Alert,
   Modal,
+  Image,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -147,7 +148,13 @@ const ProfileScreen = ({ navigation }) => {
           <View style={styles.avatarContainer}>
             <View style={styles.avatarOuter}>
               <View style={styles.avatar}>
-                {profileUser?.name ? (
+                {profileUser?.profileImage ? (
+                  <Image 
+                    source={{ uri: profileUser.profileImage }} 
+                    style={styles.avatarImage}
+                    resizeMode="cover"
+                  />
+                ) : profileUser?.name ? (
                   <Text style={styles.avatarLetter}>
                     {profileUser.name.charAt(0).toUpperCase()}
                   </Text>
@@ -506,6 +513,11 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: spacing.xl,
     fontWeight: 'bold',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: wp('10%'),
   },
   avatarBadge: {
     position: 'absolute',

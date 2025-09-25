@@ -9,8 +9,11 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Image,
+  PermissionsAndroid,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import { useAuth } from '../context/AuthContext';
 import { fontSize, spacing, borderRadius, wp, hp } from '../utils/dimensions';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -33,6 +36,8 @@ const EditProfileScreen = ({ navigation }) => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [profileData, setProfileData] = useState(null);
+  const [profileImage, setProfileImage] = useState(null);
+  const [imageUri, setImageUri] = useState(null);
 
   useEffect(() => {
     fetchProfileData();
@@ -61,6 +66,10 @@ const EditProfileScreen = ({ navigation }) => {
           drivingLicence: res.deliveryAgent?.drivingLicence || '',
           bankDetails: res.deliveryAgent?.bankDetails || '',
         });
+        // Set existing profile image if available
+        if (res.user?.profileImage) {
+          setImageUri(res.user.profileImage);
+        }
       } else {
         console.log('Error', res.error || 'Failed to load profile data');
       }
@@ -69,6 +78,89 @@ const EditProfileScreen = ({ navigation }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const requestCameraPermission = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.CAMERA,
+          {
+            title: 'Camera Permission',
+            message: 'This app needs access to camera to take profile pictures',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          },
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } catch (err) {
+        console.warn(err);
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const showImagePicker = () => {
+    Alert.alert(
+      'Select Profile Picture',
+      'Choose an option',
+      [
+        { text: 'Camera', onPress: () => openCamera() },
+        { text: 'Gallery', onPress: () => openImageLibrary() },
+        { text: 'Cancel', style: 'cancel' },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  const openCamera = async () => {
+    const hasPermission = await requestCameraPermission();
+    if (!hasPermission) {
+      Alert.alert('Permission Denied', 'Camera permission is required to take photos');
+      return;
+    }
+
+    const options = {
+      mediaType: 'photo',
+      includeBase64: false,
+      maxHeight: 2000,
+      maxWidth: 2000,
+      quality: 0.8,
+    };
+
+    launchCamera(options, (response) => {
+      if (response.didCancel || response.errorMessage) {
+        return;
+      }
+      if (response.assets && response.assets[0]) {
+        const asset = response.assets[0];
+        setProfileImage(asset);
+        setImageUri(asset.uri);
+      }
+    });
+  };
+
+  const openImageLibrary = () => {
+    const options = {
+      mediaType: 'photo',
+      includeBase64: false,
+      maxHeight: 2000,
+      maxWidth: 2000,
+      quality: 0.8,
+    };
+
+    launchImageLibrary(options, (response) => {
+      if (response.didCancel || response.errorMessage) {
+        return;
+      }
+      if (response.assets && response.assets[0]) {
+        const asset = response.assets[0];
+        setProfileImage(asset);
+        setImageUri(asset.uri);
+      }
+    });
   };
 
   const validateForm = () => {
@@ -193,7 +285,10 @@ const EditProfileScreen = ({ navigation }) => {
         status: 'online', // Default status
       };
 
-      const result = await authService.updateComprehensiveProfile(token, profileUpdateData);
+      // Use image upload service if image is selected, otherwise use regular update
+      const result = profileImage 
+        ? await authService.updateProfileWithImage(token, profileUpdateData, profileImage)
+        : await authService.updateComprehensiveProfile(token, profileUpdateData);
 
       if (result.success) {
         Alert.alert('Success', 'Profile updated successfully', [
@@ -209,8 +304,36 @@ const EditProfileScreen = ({ navigation }) => {
     }
   };
 
+  const renderImageUpload = () => (
+    <View style={styles.imageUploadSection}>
+      <Text style={styles.sectionTitle}>Profile Picture</Text>
+      <View style={styles.imageUploadContainer}>
+        <TouchableOpacity style={styles.imageUploadButton} onPress={showImagePicker}>
+          {imageUri ? (
+            <Image source={{ uri: imageUri }} style={styles.profileImagePreview} />
+          ) : (
+            <View style={styles.imagePlaceholder}>
+              <Icon name="camera-alt" size={40} color="#6b7280" />
+              <Text style={styles.imagePlaceholderText}>Tap to add photo</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+        {imageUri && (
+          <TouchableOpacity style={styles.removeImageButton} onPress={() => {
+            setImageUri(null);
+            setProfileImage(null);
+          }}>
+            <Icon name="close" size={20} color="#ef4444" />
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+
   const renderFormContent = () => (
     <>
+      {renderImageUpload()}
+      
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Personal Information</Text>
 
@@ -371,6 +494,61 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     marginTop: spacing.xs,
     marginLeft: spacing.xs,
+  },
+  imageUploadSection: {
+    marginTop: spacing.xl,
+    alignItems: 'center',
+  },
+  imageUploadContainer: {
+    position: 'relative',
+    alignItems: 'center',
+  },
+  imageUploadButton: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#f3f4f6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#e5e7eb',
+    borderStyle: 'dashed',
+  },
+  profileImagePreview: {
+    width: 116,
+    height: 116,
+    borderRadius: 58,
+  },
+  imagePlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  imagePlaceholderText: {
+    marginTop: spacing.xs,
+    fontSize: fontSize.xs,
+    color: '#6b7280',
+    textAlign: 'center',
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#ef4444',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
 });
 

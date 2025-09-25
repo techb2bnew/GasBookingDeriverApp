@@ -199,7 +199,40 @@ const DeliveryScreen = ({ navigation }) => {
         return;
       }
 
-      const result = await authService.verifyDeliveryOtp(token, currentOrder.id, deliveryOtp);
+      // Console logs for API endpoint and payload
+      console.log('=== DELIVERY OTP VERIFICATION API CALL ===');
+      console.log('API Endpoint:', `/api/orders/${currentOrder.id}/verify-otp`);
+      console.log('Method:', 'POST');
+      console.log('Headers:', {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data'
+      });
+      console.log('Payload:', {
+        otp: deliveryOtp,
+        deliveryNote: notes,
+        paymentReceived: true,
+        deliveryProof: deliveryPhoto ? 'Image file' : 'No image'
+      });
+      console.log('Order ID:', currentOrder.id);
+      console.log('OTP:', deliveryOtp);
+      console.log('Delivery Note:', notes);
+      console.log('Payment Received:', true);
+      console.log('Delivery Photo:', deliveryPhoto ? 'Present' : 'Not present');
+      console.log('==========================================');
+
+      const result = await authService.verifyDeliveryOtpWithProof(
+        token, 
+        currentOrder.id, 
+        deliveryOtp, 
+        notes, 
+        true, // paymentReceived is always true
+        deliveryPhoto
+      );
+
+      // Console log for API response
+      console.log('=== API RESPONSE ===');
+      console.log('Response:', result);
+      console.log('===================');
 
       if (result.success) {
         setVerifyingOtp(false);
@@ -419,7 +452,6 @@ const DeliveryScreen = ({ navigation }) => {
                   <Text style={styles.otpErrorText}>{otpError}</Text>
                 </View>
               ) : null}
-              {/* {otpError ? <Text style={styles.errorText}>{otpError}</Text> : null} */}
 
               <View style={styles.modalButtons}>
                 <TouchableOpacity

@@ -44,9 +44,16 @@ const orderReducer = (state, action) => {
 export const OrderProvider = ({children}) => {
   const [state, dispatch] = useReducer(orderReducer, initialState);
 
-  const fetchAvailableOrders = async () => {
+  const fetchAvailableOrders = async (agentStatus = null) => {
     try {
       dispatch({type: 'SET_LOADING', payload: true});
+      
+      // If agent status is provided and agent is offline, don't fetch orders
+      if (agentStatus && agentStatus !== 'online') {
+        console.log('Agent is offline, not fetching orders');
+        dispatch({type: 'SET_AVAILABLE_ORDERS', payload: []});
+        return;
+      }
       
       // Get token from AsyncStorage
       const token = await AsyncStorage.getItem('authToken');
@@ -171,6 +178,10 @@ export const OrderProvider = ({children}) => {
     }
   };
 
+  const setCurrentOrder = (order) => {
+    dispatch({type: 'SET_CURRENT_ORDER', payload: order});
+  };
+
   const fetchOrderHistory = async () => {
     try {
       const history = await orderService.getOrderHistory();
@@ -185,6 +196,7 @@ export const OrderProvider = ({children}) => {
       value={{
         ...state,
         fetchAvailableOrders,
+        setCurrentOrder,
         acceptOrder,
         updateOrderStatus,
         completeOrder,

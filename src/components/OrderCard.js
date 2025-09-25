@@ -10,7 +10,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
 
-const OrderCard = ({ order, onAccept }) => {
+const OrderCard = ({ order, onAccept, buttonText = "Accept Order" }) => {
   const formatTime = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -78,7 +78,7 @@ const OrderCard = ({ order, onAccept }) => {
       </View>
 
       <TouchableOpacity style={styles.acceptButton} onPress={onAccept}>
-        <Text style={styles.acceptButtonText}>Accept Order</Text>
+        <Text style={styles.acceptButtonText}>{buttonText}</Text>
         <Icon name="arrow-forward" size={18} color="#ffffff" />
       </TouchableOpacity>
     </View>

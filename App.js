@@ -24,6 +24,7 @@ import AboutUsScreen from './src/screens/AboutUsScreen';
 import PrivacyPolicyScreen from './src/screens/PrivacyPolicyScreen';
 import TermsOfServiceScreen from './src/screens/TermsOfServiceScreen';
 import DriverAgreementScreen from './src/screens/DriverAgreementScreen';
+import ActiveOrdersScreen from './src/screens/ActiveOrdersScreen';
 import { borderRadius, fontSize, spacing } from './src/utils/dimensions';
 
 const Stack = createStackNavigator();
@@ -170,6 +171,7 @@ const AppStack = () => {
       <Stack.Screen name="Main" component={TabNavigator} />
       <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
       <Stack.Screen name="Delivery" component={DeliveryScreen} />
+      <Stack.Screen name="ActiveOrders" component={ActiveOrdersScreen} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />
       <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />
       <Stack.Screen name="AboutUs" component={AboutUsScreen} />

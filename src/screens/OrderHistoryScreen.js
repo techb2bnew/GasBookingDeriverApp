@@ -9,11 +9,13 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useOrder } from '../context/OrderContext';
+import { useAuth } from '../context/AuthContext';
 import { authService } from '../services/authService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fontSize, spacing, borderRadius, wp, hp } from '../utils/dimensions';
 
-const OrderHistoryScreen = () => {
+const OrderHistoryScreen = ({ navigation }) => {
+  const { deliveryAgent } = useAuth();
   const [orderHistory, setOrderHistory] = useState([]);
   const [stats, setStats] = useState({});
   const [refreshing, setRefreshing] = useState(false);
@@ -167,21 +169,35 @@ const OrderHistoryScreen = () => {
       {/* Stats Section */}
       {stats && Object.keys(stats).length > 0 && (
         <View style={styles.statsContainer}>
+          <TouchableOpacity 
+            style={styles.statCard} 
+            onPress={() => {
+              console.log('Navigating to Dashboard...');
+              navigation.navigate('Dashboard');
+            }}
+          >
+            <Text style={styles.statNumber}>{stats?.assignedOrders || '0'}</Text>
+            <Text style={styles.statLabel}>Pending</Text>
+          </TouchableOpacity>
+          {deliveryAgent?.status === 'online' && (
+            <TouchableOpacity 
+              style={styles.statCard} 
+              onPress={() => {
+                console.log('Navigating to ActiveOrders...');
+                navigation.navigate('ActiveOrders');
+              }}
+            >
+              <Text style={styles.statNumber}>{stats?.outForDeliveryOrders || '0'}</Text>
+              <Text style={styles.statLabel}>Active</Text>
+            </TouchableOpacity>
+          )}
           <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{stats?.totalOrders || 0}</Text>
-            <Text style={styles.statLabel}>Total Orders</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{stats?.delivered || 0}</Text>
+            <Text style={styles.statNumber}>{stats?.totalDeliveredOrders || 0}</Text>
             <Text style={styles.statLabel}>Delivered</Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statNumber}>{stats?.cancelled || 0}</Text>
             <Text style={styles.statLabel}>Cancelled</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>₹{stats?.earnings || '0'}</Text>
-            <Text style={styles.statLabel}>Earnings</Text>
           </View>
         </View>
       )}

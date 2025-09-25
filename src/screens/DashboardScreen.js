@@ -37,7 +37,7 @@ const DashboardScreen = ({ navigation }) => {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   useEffect(() => {
-    fetchAvailableOrders();
+    fetchAvailableOrders(deliveryAgent?.status);
     fetchLatestProfile();
 
     (async () => {
@@ -49,7 +49,7 @@ const DashboardScreen = ({ navigation }) => {
         }
       }
     })();
-  }, []);
+  }, [deliveryAgent?.status]);
 
   const fetchLatestProfile = async () => {
     try {
@@ -67,7 +67,7 @@ const DashboardScreen = ({ navigation }) => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchAvailableOrders();
+    await fetchAvailableOrders(deliveryAgent?.status);
     setRefreshing(false);
   };
 
@@ -122,8 +122,12 @@ const DashboardScreen = ({ navigation }) => {
         
         if (newStatus === 'online') {
           await startLocationTracking();
+          // Fetch orders when going online
+          await fetchAvailableOrders('online');
         } else {
           await stopLocationTracking();
+          // Clear orders when going offline
+          await fetchAvailableOrders('offline');
         }
         // Alert.alert('Success', `Status changed to ${newStatus}`);
       } else {
@@ -185,17 +189,44 @@ const DashboardScreen = ({ navigation }) => {
       <View style={styles.ordersSection}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Available Orders</Text>
-          <TouchableOpacity onPress={onRefresh}>
-            <Icon name="refresh" size={24} color="#030213" />
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            {deliveryAgent?.status === 'online' && (
+              <TouchableOpacity 
+                style={styles.activeOrdersButton}
+                onPress={() => navigation.navigate('ActiveOrders')}
+              >
+                <Icon name="local-shipping" size={20} color="#ffffff" />
+                <Text style={styles.activeOrdersButtonText}>Active Orders</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity 
+              onPress={onRefresh}
+              disabled={deliveryAgent?.status !== 'online'}
+              style={{ 
+                opacity: deliveryAgent?.status === 'online' ? 1 : 0.5, 
+                marginLeft: deliveryAgent?.status === 'online' ? 12 : 0 
+              }}
+            >
+              <Icon name="refresh" size={24} color="#030213" />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {availableOrders.length === 0 ? (
           <View style={styles.emptyState}>
-            <Icon name="inbox" size={64} color="#717182" />
-            <Text style={styles.emptyStateTitle}>No orders available</Text>
+            <Icon 
+              name={deliveryAgent?.status === 'online' ? "inbox" : "wifi-off"} 
+              size={64} 
+              color="#717182" 
+            />
+            <Text style={styles.emptyStateTitle}>
+              {deliveryAgent?.status === 'online' ? 'No orders available' : 'You are offline'}
+            </Text>
             <Text style={styles.emptyStateSubtitle}>
-              Pull down to refresh and check for new orders
+              {deliveryAgent?.status === 'online' 
+                ? 'Pull down to refresh and check for new orders'
+                : 'Go online to see available orders'
+              }
             </Text>
           </View>
         ) : (
@@ -307,6 +338,24 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: spacing.lg,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  activeOrdersButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#10b981',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.sm,
+  },
+  activeOrdersButtonText: {
+    color: '#ffffff',
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    marginLeft: spacing.xs,
   },
   sectionTitle: {
     fontSize: fontSize.lg,
