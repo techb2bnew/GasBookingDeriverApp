@@ -18,6 +18,7 @@ import CustomAlert from '../components/CustomAlert';
 import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService } from '../services/authService';
+import { useForceLogout } from '../hooks/useForceLogout';
 
 const DashboardScreen = ({ navigation }) => {
   const { user, deliveryAgent, updateUser } = useAuth();
@@ -35,6 +36,9 @@ const DashboardScreen = ({ navigation }) => {
   const [showStatusAlert, setShowStatusAlert] = useState(false);
   const [newStatus, setNewStatus] = useState(null);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
+  // Setup force logout listener for blocked/deactivated accounts
+  useForceLogout();
 
   useEffect(() => {
     fetchAvailableOrders(deliveryAgent?.status);

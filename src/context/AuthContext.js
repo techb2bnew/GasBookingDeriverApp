@@ -81,11 +81,26 @@ export const AuthProvider = ({children}) => {
       const response = await authService.verifyOtp(email, otp);
       
       if (response.success) {
+        // Save auth token
         await AsyncStorage.setItem('authToken', response.token);
         await AsyncStorage.setItem('userData', JSON.stringify(response.user));
+        
+        // Save socket-required data
+        await AsyncStorage.setItem('userId', response.user.id.toString());
+        await AsyncStorage.setItem('userRole', response.user.role || 'agent');
+        
         if (response.deliveryAgent) {
           await AsyncStorage.setItem('deliveryAgent', JSON.stringify(response.deliveryAgent));
+          
+          // Save agencyId if available
+          if (response.deliveryAgent.agencyId) {
+            await AsyncStorage.setItem('agencyId', response.deliveryAgent.agencyId.toString());
+          }
         }
+        
+        console.log('✅ Login successful - Auth data saved for socket');
+        console.log('📝 UserId:', response.user.id);
+        console.log('📝 UserRole:', response.user.role || 'agent');
         
         dispatch({
           type: 'LOGIN_SUCCESS',
@@ -108,9 +123,17 @@ export const AuthProvider = ({children}) => {
 
   const logout = async () => {
     try {
-      await AsyncStorage.removeItem('authToken');
-      await AsyncStorage.removeItem('userData');
-      await AsyncStorage.removeItem('deliveryAgent');
+      // Remove all auth and socket data
+      await AsyncStorage.multiRemove([
+        'authToken',
+        'userData',
+        'deliveryAgent',
+        'userId',
+        'userRole',
+        'agencyId'
+      ]);
+      
+      console.log('✅ Logout successful - All auth data cleared');
       dispatch({type: 'LOGOUT'});
     } catch (error) {
       console.error('Logout error:', error);

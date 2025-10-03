@@ -10,6 +10,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { OrderProvider } from './src/context/OrderContext';
 import { LocationProvider } from './src/context/LocationContext';
+import { SocketProvider } from './src/context/SocketContext';
 
 import SplashScreen from './src/screens/SplashScreen';
 import LoginScreen from './src/screens/LoginScreen';
@@ -214,16 +215,27 @@ const App = () => {
       <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }} edges={['top', 'left', 'right']}>
         <View style={{ flex: 1, backgroundColor: '#ffffff' }}>
           <AuthProvider>
-            <LocationProvider>
-              <OrderProvider>
-                <AppNavigator />
-                <Toast />
-              </OrderProvider>
-            </LocationProvider>
+            <AppWithSocket />
           </AuthProvider>
         </View>
       </SafeAreaView>
     </SafeAreaProvider>
+  );
+};
+
+// Separate component to access auth context for socket
+const AppWithSocket = () => {
+  const { isAuthenticated } = useAuth();
+
+  return (
+    <SocketProvider isAuthenticated={isAuthenticated}>
+      <LocationProvider>
+        <OrderProvider>
+          <AppNavigator />
+          <Toast />
+        </OrderProvider>
+      </LocationProvider>
+    </SocketProvider>
   );
 };
 
