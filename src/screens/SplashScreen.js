@@ -75,7 +75,7 @@ const SplashScreen = ({ onFinish }) => {
         </View>
 
         {/* App Name */}
-        <Text style={styles.appName}>Gas Driver</Text>
+        <Text style={styles.appName}>Leadway Rider</Text>
         
         {/* Tagline */}
         <Text style={styles.tagline}>Fast & Reliable Gas Delivery</Text>
@@ -91,7 +91,7 @@ const SplashScreen = ({ onFinish }) => {
 
         {/* Company Info */}
         <View style={styles.companyInfo}>
-          <Text style={styles.companyText}>Powered by GasDriver</Text>
+          <Text style={styles.companyText}>Powered by Leadway</Text>
           <Text style={styles.versionText}>Version 1.0.0</Text>
         </View>
       </Animated.View>

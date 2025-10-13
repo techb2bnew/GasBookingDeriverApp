@@ -1,4 +1,4 @@
-// Mock order service for LPG Gas Delivery
+// Mock order service for LPG Leadway Rider
 // In a real app, these would be actual API calls to your backend
 
 const mockOrders = [

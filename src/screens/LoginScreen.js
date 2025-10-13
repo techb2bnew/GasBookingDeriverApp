@@ -63,6 +63,17 @@ const LoginScreen = () => {
     };
   }, []);
 
+  // Auto-hide errors after 3 seconds
+  useEffect(() => {
+    if (errors.phone || errors.otp || errors.server) {
+      const timer = setTimeout(() => {
+        setErrors({ phone: '', otp: '', server: '' });
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [errors]);
+
   const validatePhone = () => {
     let nextErrors = { phone: '', otp: '', server: '' };
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -182,7 +193,7 @@ const LoginScreen = () => {
           <View style={styles.logoContainer}>
             <Icon name="local-shipping" size={60} color="#ffffff" />
           </View>
-          <Text style={styles.title}>Gas Delivery</Text>
+          <Text style={styles.title}>Leadway Rider</Text>
           <Text style={styles.subtitle}>Sign in to start delivering</Text>
         </View>
 
