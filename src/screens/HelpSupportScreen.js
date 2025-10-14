@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.md,
     paddingBottom: spacing.xl,
-    backgroundColor: "#3b82f6",
+    backgroundColor: "#035db7",
     borderBottomLeftRadius: borderRadius.xl,
     borderBottomRightRadius: borderRadius.xl,
   },
@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
     width: "70%"
   },
   contactButton: {
-    backgroundColor: '#3b82f6', // Blue
+    backgroundColor: '#035db7', // Blue
     borderRadius: 12,
     paddingVertical: 12,
     alignItems: 'center',

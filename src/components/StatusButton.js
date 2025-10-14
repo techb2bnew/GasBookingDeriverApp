@@ -7,7 +7,7 @@ import {
 import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-const StatusButton = ({title, icon, onPress, disabled = false, color = '#3b82f6'}) => {
+const StatusButton = ({title, icon, onPress, disabled = false, color = '#035db7'}) => {
   return (
     <TouchableOpacity
       style={[

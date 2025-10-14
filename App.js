@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   tabContentActive: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#035db7',
     borderRadius: borderRadius.xl,
   },
   tabLabel: {

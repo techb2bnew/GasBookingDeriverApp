@@ -56,7 +56,7 @@ const OrderCard = ({ order, onAccept, buttonText = "Accept Order" }) => {
           </View>
         </View>
         <Pressable style={styles.phoneContainer} onPress={() => handleCall(order?.customerPhone)}>
-          <Icon name="phone" size={13} color="#3b82f6" />
+          <Icon name="phone" size={13} color="#035db7" />
           <Text style={styles.phoneText}>{order?.customerPhone || 'N/A'}</Text>
         </Pressable>
       </View>
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#3b82f6', // Blue background
+    backgroundColor: '#035db7', // Blue background
     paddingVertical: spacing.md,
     borderRadius: spacing.md,
   },

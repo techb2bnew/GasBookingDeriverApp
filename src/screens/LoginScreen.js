@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   ScrollView,
   Keyboard,
+  Image,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import OTPTextInput from 'react-native-otp-textinput';
@@ -191,7 +192,7 @@ const LoginScreen = () => {
         </TouchableOpacity>}
         <View style={styles.header}>
           <View style={styles.logoContainer}>
-            <Icon name="local-shipping" size={60} color="#ffffff" />
+            <Image source={require('../assets/leadIcon.png')} style={styles.logoImage} />
           </View>
           <Text style={styles.title}>Leadway Rider</Text>
           <Text style={styles.subtitle}>Sign in to start delivering</Text>
@@ -288,7 +289,7 @@ const LoginScreen = () => {
                       onPress={handleResendOtp}
                       disabled={loading || resendingOtp}>
                       {resendingOtp ? (
-                        <ActivityIndicator color="#3b82f6" />
+                        <ActivityIndicator color="#035db7" />
                       ) : (
                         <Text style={styles.resendButtonText}>Resend</Text>
                       )}
@@ -370,11 +371,11 @@ const styles = StyleSheet.create({
     width: wp('30%'),
     height: wp('30%'),
     borderRadius: wp('15%'),
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.xl,
-    shadowColor: '#3b82f6',
+    shadowColor: '#035db7',
     shadowOffset: {
       width: 0,
       height: 8,
@@ -382,6 +383,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 16,
     elevation: 8,
+  },
+  logoImage: {
+    width: 60,
+    height: 60,
   },
   title: {
     fontSize: fontSize.xxl,
@@ -423,8 +428,8 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   inputContainerFocused: {
-    borderColor: '#3b82f6', // Blue when focused
-    shadowColor: '#3b82f6',
+    borderColor: '#035db7', // Blue when focused
+    shadowColor: '#035db7',
     shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 4,
@@ -434,7 +439,7 @@ const styles = StyleSheet.create({
     color: '#6b7280', // Gray icon
   },
   inputIconFocused: {
-    color: '#3b82f6', // Blue when focused
+    color: '#035db7', // Blue when focused
   },
   input: {
     flex: 1,
@@ -474,14 +479,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#fef2f2' // Light red background
   },
   loginButton: {
-    backgroundColor: '#3b82f6', // Blue
+    backgroundColor: '#035db7', // Blue
     borderRadius: borderRadius.xl,
     paddingVertical: Platform.OS === "ios" ? 12 : 8,
     alignItems: 'center',
     marginTop: spacing.xxl,
     width: "100%",
     marginBottom: 20,
-    shadowColor: '#3b82f6',
+    shadowColor: '#035db7',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -570,8 +575,8 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   otpInputFocused: {
-    borderColor: '#3b82f6', // Blue when focused
-    shadowColor: '#3b82f6',
+    borderColor: '#035db7', // Blue when focused
+    shadowColor: '#035db7',
     shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 1,
@@ -589,7 +594,7 @@ const styles = StyleSheet.create({
     marginLeft: spacing.sm,
   },
   resendButtonText: {
-    color: '#3b82f6', // Blue
+    color: '#035db7', // Blue
     fontSize: fontSize.sm,
     fontWeight: '600',
     textDecorationLine: 'underline',
@@ -619,7 +624,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   supportText: {
-    color: '#3b82f6',
+    color: '#035db7',
     fontSize: fontSize.sm,
     fontWeight: '600',
     textDecorationLine: 'underline',
@@ -644,14 +649,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   modalLink: {
-    color: '#3b82f6',
+    color: '#035db7',
     fontSize: fontSize.md,
     marginVertical: spacing.xs,
     textDecorationLine: 'underline',
   },
   modalClose: {
     marginTop: spacing.lg,
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#035db7',
     paddingVertical: Platform.OS === 'ios' ? 10 : 8,
     paddingHorizontal: 24,
     borderRadius: borderRadius.xl,

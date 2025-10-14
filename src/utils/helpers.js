@@ -37,10 +37,10 @@ export const getStatusColor = (status) => {
   const statusColors = {
     pending: '#717182',
     accepted: '#10b981',
-    heading_to_gas_station: '#3b82f6',
+    heading_to_gas_station: '#035db7',
     at_gas_station: '#f59e0b',
     picked_up: '#8b5cf6',
-    heading_to_customer: '#3b82f6',
+    heading_to_customer: '#035db7',
     delivered: '#10b981',
     canceled: '#ef4444',
   };

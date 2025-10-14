@@ -185,7 +185,7 @@ const OrderDetailScreen = ({ navigation }) => {
             title: 'Heading to Customer',
             onPress: () => handleStatusUpdate('out_for_delivery'),
             icon: 'directions',
-            color: '#3b82f6',
+            color: '#035db7',
           },
         ];
       case 'assigned':
@@ -194,7 +194,7 @@ const OrderDetailScreen = ({ navigation }) => {
             title: 'Heading to Customer',
             onPress: () => handleStatusUpdate('out_for_delivery'),
             icon: 'directions',
-            color: '#3b82f6',
+            color: '#035db7',
           },
         ];
       case 'out_for_delivery':
@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.md,
     paddingBottom: spacing.xl,
-    backgroundColor: "#3b82f6",
+    backgroundColor: "#035db7",
     borderBottomLeftRadius: borderRadius.xl,
     borderBottomRightRadius: borderRadius.xl,
   },
@@ -657,7 +657,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     padding: spacing.md,
     borderLeftWidth: 4,
-    borderLeftColor: '#3b82f6',
+    borderLeftColor: '#035db7',
   },
   pendingStatus: {
     color: '#f59e0b',

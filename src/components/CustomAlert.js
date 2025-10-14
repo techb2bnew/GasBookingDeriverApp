@@ -44,7 +44,7 @@ const CustomAlert = ({
       default:
         return {
           icon: 'info',
-          color: '#3b82f6',
+          color: '#035db7',
           backgroundColor: '#eff6ff',
         };
     }
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f3f4f6',
   },
   confirmButton: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#035db7',
   },
   cancelButtonText: {
     fontSize: fontSize.md,

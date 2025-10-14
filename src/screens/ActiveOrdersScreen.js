@@ -86,10 +86,10 @@ const ActiveOrdersScreen = ({ navigation }) => {
       
       if (result.success) {
         console.log('Order details fetched:', result.order);
-        // Set the order in context for delivery screen
+        // Set the order in context for order detail screen
         setCurrentOrder(result.order);
-        // Navigate to Delivery screen
-        navigation.navigate('Delivery');
+        // Navigate to OrderDetail screen
+        navigation.navigate('OrderDetail');
       } else {
         console.error('Error fetching order details:', result.error);
         Alert.alert('Error', result.error || 'Failed to load order details');
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.md,
     paddingBottom: spacing.xl,
-    backgroundColor: "#3b82f6",
+    backgroundColor: "#035db7",
     borderBottomLeftRadius: borderRadius.xl,
     borderBottomRightRadius: borderRadius.xl,
   },

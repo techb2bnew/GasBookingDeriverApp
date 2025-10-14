@@ -13,7 +13,6 @@ import { useOrder } from '../context/OrderContext';
 import { useAuth } from '../context/AuthContext';
 import { useLocation } from '../context/LocationContext';
 import OrderCard from '../components/OrderCard';
-import CurrentOrderBanner from '../components/CurrentOrderBanner';
 import CustomAlert from '../components/CustomAlert';
 import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -24,7 +23,6 @@ const DashboardScreen = ({ navigation }) => {
   const { user, deliveryAgent, updateUser } = useAuth();
   const {
     availableOrders,
-    currentOrder,
     loading,
     fetchAvailableOrders,
     acceptOrder,
@@ -183,13 +181,6 @@ const DashboardScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      {currentOrder && (
-        <CurrentOrderBanner
-          order={currentOrder}
-          onPress={() => navigation.navigate('OrderDetail')}
-        />
-      )}
-
       <View style={styles.ordersSection}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Available Orders</Text>
@@ -284,7 +275,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.md,
     paddingBottom: spacing.xl,
-    backgroundColor: "#3b82f6",
+    backgroundColor: "#035db7",
     borderBottomLeftRadius: borderRadius.xl,
     borderBottomRightRadius: borderRadius.xl,
   },
@@ -306,7 +297,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.xl,
     borderWidth: 1,
-    borderColor: '#3b82f6', // Blue border
+    borderColor: '#035db7', // Blue border
     backgroundColor: "red"
   },
   statusIndicatorActive: {

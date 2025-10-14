@@ -425,7 +425,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: "#3b82f6",
+    backgroundColor: "#035db7",
     borderBottomLeftRadius: borderRadius.xl,
     borderBottomRightRadius: borderRadius.xl,
   },
@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
   },
   headerActionText: {
     fontSize: fontSize.md,
-    color: '#3b82f6',
+    color: '#035db7',
     fontWeight: '600',
   },
   editButton: {
@@ -497,7 +497,7 @@ const styles = StyleSheet.create({
     width: wp('20%'),
     height: wp('20%'),
     borderRadius: wp('10%'),
-    backgroundColor: '#3b82f6', // Blue
+    backgroundColor: '#035db7', // Blue
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#1f2937', // Dark shadow
@@ -662,7 +662,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 16,
-    backgroundColor: '#3b82f6', // Blue
+    backgroundColor: '#035db7', // Blue
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,

@@ -6,6 +6,7 @@ import {
   Animated,
   Dimensions,
   StatusBar,
+  Image,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
@@ -70,7 +71,9 @@ const SplashScreen = ({ onFinish }) => {
         {/* Logo Container */}
         <View style={styles.logoContainer}>
           <View style={styles.logoBackground}>
-            <Icon name="local-shipping" size={80} color="#ffffff" />
+          <View style={{ alignItems: 'center'}}>
+            <Image source={require('../assets/leadIcon.png')} style={styles.logoImage} />
+          </View>
           </View>
         </View>
 
@@ -102,7 +105,7 @@ const SplashScreen = ({ onFinish }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1e293b', // Dark slate background
+    backgroundColor: '#035db7', // Dark slate background
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -117,7 +120,7 @@ const styles = StyleSheet.create({
     width: wp('30%'),
     height: wp('30%'),
     borderRadius: wp('15%'),
-    backgroundColor: '#3b82f6', // Blue
+    backgroundColor: '#fff', // Blue
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -153,7 +156,7 @@ const styles = StyleSheet.create({
     width: wp('2%'),
     height: wp('2%'),
     borderRadius: wp('1%'),
-    backgroundColor: '#3b82f6', // Blue
+    backgroundColor: '#035db7', // Blue
     marginHorizontal: spacing.xs,
   },
   dot1: {
@@ -161,6 +164,10 @@ const styles = StyleSheet.create({
   },
   dot2: {
     opacity: 0.7,
+  },
+  logoImage: {
+    width: 80,
+    height: 80,
   },
   dot3: {
     opacity: 1,
@@ -170,12 +177,12 @@ const styles = StyleSheet.create({
   },
   companyText: {
     fontSize: fontSize.sm,
-    color: '#64748b', // Slate gray
+    color: '#fff', // Slate gray
     marginBottom: spacing.xs,
   },
   versionText: {
     fontSize: fontSize.xs,
-    color: '#64748b', // Slate gray
+    color: '#fff', // Slate gray
   },
 });
 

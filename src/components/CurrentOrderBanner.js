@@ -15,13 +15,13 @@ const CurrentOrderBanner = ({ order, onPress }) => {
         return {
           text: 'Head to Gas Station',
           icon: 'local-gas-station',
-          color: '#3b82f6',
+          color: '#035db7',
         };
       case 'heading_to_gas_station':
         return {
           text: 'Heading to Gas Station',
           icon: 'local-gas-station',
-          color: '#3b82f6',
+          color: '#035db7',
         };
       case 'at_gas_station':
         return {
@@ -39,7 +39,7 @@ const CurrentOrderBanner = ({ order, onPress }) => {
         return {
           text: 'Heading to Customer',
           icon: 'directions',
-          color: '#3b82f6',
+          color: '#035db7',
         };
       default:
         return {

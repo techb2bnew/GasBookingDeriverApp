@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -34,6 +34,8 @@ const DeliveryScreen = ({ navigation }) => {
   const [apiError, setApiError] = useState('');
   const [sendingOtp, setSendingOtp] = useState(false);
   const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
+  const [canResend, setCanResend] = useState(true);
 
   const selectImage = () => {
     // Alert.alert(
@@ -148,6 +150,23 @@ const DeliveryScreen = ({ navigation }) => {
     }
   };
 
+  // Timer effect for resend OTP
+  useEffect(() => {
+    let interval;
+    if (resendTimer > 0) {
+      interval = setInterval(() => {
+        setResendTimer((prev) => {
+          if (prev <= 1) {
+            setCanResend(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [resendTimer]);
+
   const handleCompleteDelivery = async () => {
     if (!deliveryPhoto) {
       setApiError('Please take a delivery proof photo');
@@ -170,6 +189,8 @@ const DeliveryScreen = ({ navigation }) => {
       if (result.success) {
         setSendingOtp(false);
         setShowOtpModal(true);
+        setResendTimer(30); // 30 seconds timer
+        setCanResend(false);
         console.log('OTP sent successfully');
       } else {
         setApiError(result.error || 'Failed to send OTP');
@@ -180,6 +201,46 @@ const DeliveryScreen = ({ navigation }) => {
       setSendingOtp(false);
       console.log('Error sending OTP:', error);
     }
+  };
+
+  const handleResendOtp = async () => {
+    if (!canResend) return;
+
+    setSendingOtp(true);
+    setOtpError('');
+
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      if (!token) {
+        setOtpError('Authentication token not found');
+        setSendingOtp(false);
+        return;
+      }
+
+      const result = await authService.sendDeliveryOtp(token, currentOrder.id);
+
+      if (result.success) {
+        setSendingOtp(false);
+        setResendTimer(30); // 30 seconds timer
+        setCanResend(false);
+        setDeliveryOtp(''); // Clear previous OTP
+      } else {
+        setOtpError(result.error || 'Failed to resend OTP');
+        setSendingOtp(false);
+      }
+    } catch (error) {
+      setOtpError('Network error occurred');
+      setSendingOtp(false);
+      console.log('Error resending OTP:', error);
+    }
+  };
+
+  const handleCloseOtpModal = () => {
+    setShowOtpModal(false);
+    setDeliveryOtp('');
+    setOtpError('');
+    setResendTimer(0);
+    setCanResend(true);
   };
 
   const handleOtpSubmit = async () => {
@@ -386,7 +447,7 @@ const DeliveryScreen = ({ navigation }) => {
         visible={showOtpModal}
         transparent={true}
         animationType="slide"
-        onRequestClose={() => setShowOtpModal(false)}
+        onRequestClose={handleCloseOtpModal}
       >
         <KeyboardAvoidingView
           style={styles.modalOverlay}
@@ -402,7 +463,7 @@ const DeliveryScreen = ({ navigation }) => {
                 <Text style={styles.modalTitle}>Delivery OTP</Text>
                 <TouchableOpacity
                   style={styles.closeButton}
-                  onPress={() => setShowOtpModal(false)}
+                  onPress={handleCloseOtpModal}
                 >
                   <Icon name="close" size={24} color="#6b7280" />
                 </TouchableOpacity>
@@ -411,6 +472,13 @@ const DeliveryScreen = ({ navigation }) => {
               <Text style={styles.modalSubtitle}>
                 Please enter the 6-digit OTP provided by customer
               </Text>
+
+              {currentOrder?.customerEmail && (
+                <View style={styles.customerEmailContainer}>
+                  <Icon name="email" size={16} color="#6b7280" />
+                  <Text style={styles.customerEmailText}>{currentOrder.customerEmail}</Text>
+                </View>
+              )}
 
               {deliveryPhoto && (
                 <View style={styles.imagePreview}>
@@ -453,10 +521,36 @@ const DeliveryScreen = ({ navigation }) => {
                 </View>
               ) : null}
 
+              {/* Resend OTP Button */}
+              <TouchableOpacity
+                style={styles.resendOtpButton}
+                onPress={handleResendOtp}
+                disabled={!canResend || sendingOtp}
+              >
+                <Icon 
+                  name="refresh" 
+                  size={16} 
+                  color={canResend && !sendingOtp ? '#035db7' : '#9ca3af'} 
+                />
+                <Text 
+                  style={[
+                    styles.resendOtpText, 
+                    (!canResend || sendingOtp) && styles.resendOtpTextDisabled
+                  ]}
+                >
+                  {sendingOtp 
+                    ? 'Sending...' 
+                    : canResend 
+                      ? 'Resend OTP' 
+                      : `Resend in ${resendTimer}s`
+                  }
+                </Text>
+              </TouchableOpacity>
+
               <View style={styles.modalButtons}>
                 <TouchableOpacity
                   style={styles.modalButton}
-                  onPress={() => setShowOtpModal(false)}>
+                  onPress={handleCloseOtpModal}>
                   <Text style={styles.modalButtonText}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -490,7 +584,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.md,
     paddingBottom: spacing.xl,
-    backgroundColor: "#3b82f6",
+    backgroundColor: "#035db7",
     borderBottomLeftRadius: borderRadius.xl,
     borderBottomRightRadius: borderRadius.xl,
   },
@@ -698,6 +792,39 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 24,
   },
+  customerEmailContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f3f4f6',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  customerEmailText: {
+    fontSize: 14,
+    color: '#1f2937',
+    fontWeight: '500',
+    marginLeft: 8,
+  },
+  resendOtpButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  resendOtpText: {
+    fontSize: 14,
+    color: '#035db7',
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+  resendOtpTextDisabled: {
+    color: '#9ca3af',
+  },
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -713,7 +840,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
   },
   modalButtonPrimary: {
-    backgroundColor: '#3b82f6', // Blue
+    backgroundColor: '#035db7', // Blue
   },
   modalButtonText: {
     fontSize: 16,
@@ -784,7 +911,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 8,
-    backgroundColor: '#3b82f6', // Blue
+    backgroundColor: '#035db7', // Blue
   },
   doneButtonText: {
     color: '#ffffff', // White text
