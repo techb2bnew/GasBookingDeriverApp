@@ -1,7 +1,7 @@
 // Helper functions for the app
 
 export const formatCurrency = (amount) => {
-  return `₹${parseFloat(amount).toFixed(2)}`;
+  return `$${parseFloat(amount).toFixed(2)}`;
 };
 
 export const formatDistance = (distance) => {

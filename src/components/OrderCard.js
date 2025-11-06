@@ -42,7 +42,7 @@ const OrderCard = ({ order, onAccept, buttonText = "Accept Order" }) => {
           <Text style={styles.orderTime}>{formatTime(order?.createdAt)}</Text>
         </View>
         <View style={styles.earningsContainer}>
-          <Text style={styles.earnings}>₹{order?.totalAmount || '0'}</Text>
+          <Text style={styles.earnings}>${order?.totalAmount || '0'}</Text>
           <Text style={styles.earningsLabel}>Total Amount</Text>
         </View>
       </View>
