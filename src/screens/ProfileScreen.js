@@ -17,6 +17,7 @@ import { authService } from '../services/authService';
 import { useOrder } from '../context/OrderContext';
 import { fontSize, spacing, borderRadius, wp, hp } from '../utils/dimensions';
 import CustomAlert from '../components/CustomAlert';
+import { COLORS } from '../utils/constants';
 
 const ProfileScreen = ({ navigation }) => {
   const { user, logout, updateUser } = useAuth();
@@ -40,21 +41,21 @@ const ProfileScreen = ({ navigation }) => {
   useFocusEffect(
     React.useCallback(() => {
       fetchProfile();
-    }, [])
+    }, []),
   );
 
   const fetchProfile = async () => {
     try {
       setLoading(true);
       const token = await AsyncStorage.getItem('authToken');
-      console.log("token", token);
+      console.log('token', token);
 
       if (!token) {
         setLoading(false);
         return;
       }
       const res = await authService.getProfile(token);
-      console.log("res", res);
+      console.log('res', res);
 
       if (res.success) {
         setProfileUser(res.user);
@@ -70,8 +71,12 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   const calculateStats = () => {
-    const delivered = orderHistory.filter(order => order.status === 'delivered').length;
-    const canceled = orderHistory.filter(order => order.status === 'canceled').length;
+    const delivered = orderHistory.filter(
+      order => order.status === 'delivered',
+    ).length;
+    const canceled = orderHistory.filter(
+      order => order.status === 'canceled',
+    ).length;
     const earnings = orderHistory
       .filter(order => order.status === 'delivered')
       .reduce((sum, order) => sum + (order.deliveryFee || 0), 0);
@@ -132,7 +137,10 @@ const ProfileScreen = ({ navigation }) => {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Profile</Text>
         <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.editButton} onPress={() => navigation.navigate('EditProfile')}>
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={() => navigation.navigate('EditProfile')}
+          >
             <Icon name="edit" size={20} color="black" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
@@ -149,8 +157,8 @@ const ProfileScreen = ({ navigation }) => {
             <View style={styles.avatarOuter}>
               <View style={styles.avatar}>
                 {profileUser?.profileImage ? (
-                  <Image 
-                    source={{ uri: profileUser.profileImage }} 
+                  <Image
+                    source={{ uri: profileUser.profileImage }}
                     style={styles.avatarImage}
                     resizeMode="cover"
                   />
@@ -166,7 +174,9 @@ const ProfileScreen = ({ navigation }) => {
           </View>
 
           <View style={styles.profileInfo}>
-            <Text style={styles.driverName}>{profileUser?.name || 'Driver Name'}</Text>
+            <Text style={styles.driverName}>
+              {profileUser?.name || 'Driver Name'}
+            </Text>
             <Text style={styles.driverEmail}>{profileUser?.email}</Text>
             <View style={styles.ratingContainer}>
               <Icon name="star" size={16} color="#fbbf24" />
@@ -181,7 +191,7 @@ const ProfileScreen = ({ navigation }) => {
           {/* Personal Information Card */}
           <View style={styles.infoCard}>
             <View style={styles.cardHeader}>
-              <Icon name="person-outline" size={20} color="#030213" />
+              <Icon name="person-outline" size={20} color={COLORS.blue} />
               <Text style={styles.cardTitle}>Personal Information</Text>
             </View>
             <View style={styles.cardContent}>
@@ -257,7 +267,7 @@ const ProfileScreen = ({ navigation }) => {
           {/* Vehicle Information Card */}
           <View style={styles.infoCard}>
             <View style={styles.cardHeader}>
-              <Icon name="directions-car" size={20} color="#030213" />
+              <Icon name="directions-car" size={20} color={COLORS.blue} />
               <Text style={styles.cardTitle}>Vehicle Information</Text>
             </View>
             <View style={styles.cardContent}>
@@ -278,7 +288,7 @@ const ProfileScreen = ({ navigation }) => {
           {/* Bank Details Card */}
           <View style={styles.infoCard}>
             <View style={styles.cardHeader}>
-              <Icon name="account-balance" size={20} color="#030213" />
+              <Icon name="account-balance" size={20} color={COLORS.blue} />
               <Text style={styles.cardTitle}>Bank Details</Text>
             </View>
             <View style={styles.cardContent}>
@@ -299,13 +309,19 @@ const ProfileScreen = ({ navigation }) => {
           {/* Status Information Card */}
           <View style={styles.infoCard}>
             <View style={styles.cardHeader}>
-              <Icon name="info-outline" size={20} color="#030213" />
+              <Icon name="info-outline" size={20} color={COLORS.blue} />
               <Text style={styles.cardTitle}>Status Information</Text>
             </View>
             <View style={styles.cardContent}>
               <View style={styles.infoRow}>
                 <View style={styles.infoIcon}>
-                  <Icon name="check-circle" size={16} color={deliveryAgent?.status === "online" ? "#10b981" : "#717182"} />
+                  <Icon
+                    name="check-circle"
+                    size={16}
+                    color={
+                      deliveryAgent?.status === 'online' ? '#10b981' : '#717182'
+                    }
+                  />
                 </View>
                 <View style={styles.infoText}>
                   <Text style={styles.infoLabel}>Status</Text>
@@ -322,7 +338,9 @@ const ProfileScreen = ({ navigation }) => {
                   <Text style={styles.infoLabel}>Joined Date</Text>
                   <Text style={styles.infoValue}>
                     {deliveryAgent?.joinedAt
-                      ? new Date(deliveryAgent.joinedAt).toLocaleDateString('en-GB')
+                      ? new Date(deliveryAgent.joinedAt).toLocaleDateString(
+                          'en-GB',
+                        )
                       : 'Not available'}
                   </Text>
                 </View>
@@ -331,7 +349,6 @@ const ProfileScreen = ({ navigation }) => {
           </View>
         </View>
       </View>
-
 
       <View style={styles.menuSection}>
         <Text style={styles.sectionTitle}>Account</Text>
@@ -371,7 +388,8 @@ const ProfileScreen = ({ navigation }) => {
 
         <TouchableOpacity
           style={[styles.menuItem, styles.logoutItem]}
-          onPress={handleLogout}>
+          onPress={handleLogout}
+        >
           <View style={styles.menuItemLeft}>
             <Icon name="logout" size={20} color="#ef4444" />
             <Text style={[styles.menuItemText, styles.logoutText]}>Logout</Text>
@@ -380,10 +398,13 @@ const ProfileScreen = ({ navigation }) => {
 
         <TouchableOpacity
           style={[styles.menuItem, styles.deleteItem]}
-          onPress={handleDeleteAccount}>
+          onPress={handleDeleteAccount}
+        >
           <View style={styles.menuItemLeft}>
             <Icon name="delete-forever" size={20} color="#ef4444" />
-            <Text style={[styles.menuItemText, styles.deleteText]}>Delete Account</Text>
+            <Text style={[styles.menuItemText, styles.deleteText]}>
+              Delete Account
+            </Text>
           </View>
         </TouchableOpacity>
       </View>
@@ -425,14 +446,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: "#035db7",
+    backgroundColor: COLORS.primary,
     borderBottomLeftRadius: borderRadius.xl,
     borderBottomRightRadius: borderRadius.xl,
   },
   headerTitle: {
     fontSize: fontSize.xl,
     fontWeight: '600',
-    color: "white", // Dark text
+    color: 'white', // Dark text
   },
   headerActions: {
     flexDirection: 'row',
@@ -455,7 +476,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   logoutButton: {
-    backgroundColor: '#ef4444',
+    backgroundColor: COLORS.blue,
     paddingHorizontal: 8,
     paddingVertical: 8,
     borderRadius: 8,
@@ -468,7 +489,7 @@ const styles = StyleSheet.create({
   },
   profileSection: {
     paddingVertical: spacing.xl,
-    marginTop:10
+    marginTop: 10,
   },
   profileHeader: {
     flexDirection: 'row',
@@ -497,7 +518,7 @@ const styles = StyleSheet.create({
     width: wp('20%'),
     height: wp('20%'),
     borderRadius: wp('10%'),
-    backgroundColor: '#035db7', // Blue
+    backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#1f2937', // Dark shadow
@@ -589,7 +610,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: fontSize.md,
     fontWeight: '600',
-    color: '#1f2937', // Dark text
+    color: COLORS.blue,
     marginLeft: spacing.md,
   },
   cardContent: {

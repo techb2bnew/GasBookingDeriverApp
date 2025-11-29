@@ -13,18 +13,20 @@ import {
 } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import AntDesign from 'react-native-vector-icons/AntDesign';
 import { useOrder } from '../context/OrderContext';
 import { useLocation } from '../context/LocationContext';
 import StatusButton from '../components/StatusButton';
 import MapViewDirections from 'react-native-maps-directions';
 import { fontSize, spacing, borderRadius, wp, hp } from '../utils/dimensions';
-
+import { COLORS } from '../utils/constants';
 
 const OrderDetailScreen = ({ navigation }) => {
   const { currentOrder, updateOrderStatus, acceptOrder } = useOrder();
   const { currentLocation, route, eta, getRoute } = useLocation();
   const [mapRegion, setMapRegion] = useState(null);
   const [customerCoordinates, setCustomerCoordinates] = useState(null);
+  console.log('currentOrdercurrentOrder', currentOrder);
 
   const mapRef = useRef(null);
 
@@ -40,7 +42,7 @@ const OrderDetailScreen = ({ navigation }) => {
   useEffect(() => {
     if (currentOrder && currentLocation && customerCoordinates) {
       const destination = customerCoordinates;
-      
+
       if (destination) {
         // Get route from current location to customer
         getRoute(destination);
@@ -48,8 +50,10 @@ const OrderDetailScreen = ({ navigation }) => {
         // Set map region to include current location and customer location
         const midLat = (currentLocation.latitude + destination.latitude) / 2;
         const midLng = (currentLocation.longitude + destination.longitude) / 2;
-        const latDelta = Math.abs(currentLocation.latitude - destination.latitude) * 1.5;
-        const lngDelta = Math.abs(currentLocation.longitude - destination.longitude) * 1.5;
+        const latDelta =
+          Math.abs(currentLocation.latitude - destination.latitude) * 1.5;
+        const lngDelta =
+          Math.abs(currentLocation.longitude - destination.longitude) * 1.5;
 
         setMapRegion({
           latitude: midLat,
@@ -72,46 +76,47 @@ const OrderDetailScreen = ({ navigation }) => {
     return () => clearInterval(interval);
   }, [currentOrder, currentLocation, customerCoordinates]);
 
-  const geocodeAddress = async (address) => {
+  const geocodeAddress = async address => {
     try {
       const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI`
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+          address,
+        )}&key=AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI`,
       );
       const data = await response.json();
-      
+
       if (data.results && data.results.length > 0) {
         const location = data.results[0].geometry.location;
         return {
           latitude: location.lat,
-          longitude: location.lng
+          longitude: location.lng,
         };
       }
     } catch (error) {
       console.log('Geocoding error:', error);
     }
-    
+
     // Fallback to Mohali coordinates
     return {
       latitude: 30.7046,
-      longitude: 76.7179
+      longitude: 76.7179,
     };
   };
 
   const getCurrentDestination = () => {
     if (!currentOrder) return null;
-    
+
     // Use geocoded coordinates if available
     if (customerCoordinates) {
       return customerCoordinates;
     }
-    
+
     // Fallback to default Mohali coordinates
     return {
       latitude: 30.7046,
-      longitude: 76.7179
+      longitude: 76.7179,
     };
   };
-
 
   const getCurrentAddress = () => {
     if (!currentOrder) return '';
@@ -135,11 +140,11 @@ const OrderDetailScreen = ({ navigation }) => {
             }
           },
         },
-      ]
+      ],
     );
   };
 
-  const handleStatusUpdate = async (newStatus) => {
+  const handleStatusUpdate = async newStatus => {
     // Direct status update without notes modal
     await updateStatusWithNotes(newStatus, '');
   };
@@ -159,10 +164,7 @@ const OrderDetailScreen = ({ navigation }) => {
     }
   };
 
-
-
-
-  const handleCall = (phoneNumber) => {
+  const handleCall = phoneNumber => {
     Linking.openURL(`tel:${phoneNumber}`);
   };
 
@@ -218,37 +220,61 @@ const OrderDetailScreen = ({ navigation }) => {
       </View>
     );
   }
-  const capitalizeFirstLetter = (text) => {
+  const capitalizeFirstLetter = text => {
     if (!text) return '';
     return text.charAt(0).toUpperCase() + text.slice(1);
   };
   const truncateText = (text, maxLength = 15) => {
     if (!text) return '';
-    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+    return text.length > maxLength
+      ? text.substring(0, maxLength) + '...'
+      : text;
   };
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}>
+          onPress={() => navigation.goBack()}
+        >
           <Icon name="arrow-back" size={24} color="#ffffff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{`Order #${truncateText(currentOrder?.id, 18)}` || currentOrder?.orderNumber}</Text>
+        <Text style={styles.headerTitle}>
+          {`Order #${truncateText(currentOrder?.id, 18)}` ||
+            currentOrder?.orderNumber}
+        </Text>
         <View style={styles.headerRight} />
       </View>
 
       <View style={styles.mapContainer}>
         {mapRegion && (
-          <MapView style={styles.map} region={mapRegion} showsUserLocation mapType="standard" ref={mapRef}
+          <MapView
+            style={styles.map}
+            region={mapRegion}
+            showsUserLocation
+            mapType="standard"
+            ref={mapRef}
           >
             {currentLocation && (
+              // <Marker
+              //   provider={PROVIDER_GOOGLE}
+              //   coordinate={currentLocation}
+              //   title="Your Location"
+              //   // pinColor="blue"
+              //   rotation={heading} // <-- car direction rotation
+              //   image={require('../assets/car.png')}
+              // />
               <Marker
-                provider={PROVIDER_GOOGLE}
                 coordinate={currentLocation}
-                title="Your Location"
-                pinColor="blue"
-              />
+                anchor={{ x: 0.5, y: 0.5 }}
+                flat={true}
+                // rotation={heading}
+              >
+                <View style={{ transform: [{ rotate: `deg` }] }}>
+                 <AntDesign name="car" size={24} color="red" />
+
+                </View>
+              </Marker>
             )}
 
             {getCurrentDestination() && (
@@ -292,7 +318,10 @@ const OrderDetailScreen = ({ navigation }) => {
         </View>
       </View>
 
-      <ScrollView style={styles.detailsContainer} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.detailsContainer}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.orderInfo}>
           <Text style={styles.sectionTitle}>Order Details</Text>
           <View style={styles.infoRow}>
@@ -305,7 +334,9 @@ const OrderDetailScreen = ({ navigation }) => {
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.label}>Customer:</Text>
-            <Text style={styles.value}>{capitalizeFirstLetter(currentOrder?.customerName)}</Text>
+            <Text style={styles.value}>
+              {capitalizeFirstLetter(currentOrder?.customerName)}
+            </Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.label}>Customer Phone:</Text>
@@ -313,11 +344,20 @@ const OrderDetailScreen = ({ navigation }) => {
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.label}>Payment Method:</Text>
-            <Text style={styles.value}>{currentOrder?.paymentMethod?.replace('_', ' ').toUpperCase()}</Text>
+            <Text style={styles.value}>
+              {currentOrder?.paymentMethod?.replace(/_/g, ' ').toUpperCase()}
+            </Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.label}>Payment Status:</Text>
-            <Text style={[styles.value, currentOrder?.paymentStatus === 'pending' ? styles.pendingStatus : styles.completedStatus]}>
+            <Text
+              style={[
+                styles.value,
+                currentOrder?.paymentStatus === 'pending'
+                  ? styles.pendingStatus
+                  : styles.completedStatus,
+              ]}
+            >
               {currentOrder?.paymentStatus?.toUpperCase()}
             </Text>
           </View>
@@ -328,7 +368,7 @@ const OrderDetailScreen = ({ navigation }) => {
           <View style={styles.infoRow}>
             <Text style={styles.label}>Status:</Text>
             <Text style={[styles.value, styles.status]}>
-              {currentOrder?.status?.replace('_', ' ').toUpperCase()}
+              {currentOrder?.status?.replace(/_/g, ' ').toUpperCase()}
             </Text>
           </View>
           {currentOrder.adminNotes && (
@@ -346,13 +386,17 @@ const OrderDetailScreen = ({ navigation }) => {
             {currentOrder?.items.map((item, index) => (
               <View key={index} style={styles.itemCard}>
                 <View style={styles.itemHeader}>
-                  <Text style={styles.itemName}>{capitalizeFirstLetter(item?.productName)}</Text>
+                  <Text style={styles.itemName}>
+                    {capitalizeFirstLetter(item?.productName)}
+                  </Text>
                   <Text style={styles.itemTotal}>${item?.total}</Text>
                 </View>
                 <View style={styles.itemDetails}>
                   <Text style={styles.itemVariant}>{item?.variantLabel}</Text>
                   <Text style={styles.itemQuantity}>Qty: {item?.quantity}</Text>
-                  <Text style={styles.itemPrice}>${item?.variantPrice} each</Text>
+                  <Text style={styles.itemPrice}>
+                    ${item?.variantPrice} each
+                  </Text>
                 </View>
               </View>
             ))}
@@ -363,7 +407,9 @@ const OrderDetailScreen = ({ navigation }) => {
           <Text style={styles.sectionTitle}>Delivery Address</Text>
           <View style={styles.addressCard}>
             <Icon name="location-on" size={20} color="#030213" />
-            <Text style={styles.addressText}>{currentOrder?.customerAddress}</Text>
+            <Text style={styles.addressText}>
+              {currentOrder?.customerAddress}
+            </Text>
           </View>
         </View>
 
@@ -371,9 +417,12 @@ const OrderDetailScreen = ({ navigation }) => {
           <Text style={styles.sectionTitle}>Contact Customer</Text>
           <TouchableOpacity
             style={styles.callButton}
-            onPress={() => handleCall(currentOrder?.customerPhone)}>
+            onPress={() => handleCall(currentOrder?.customerPhone)}
+          >
             <Icon name="phone" size={20} color="#ffffff" />
-            <Text style={styles.callButtonText}>Call {capitalizeFirstLetter(currentOrder?.customerName)}</Text>
+            <Text style={styles.callButtonText}>
+              Call {capitalizeFirstLetter(currentOrder?.customerName)}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -389,8 +438,6 @@ const OrderDetailScreen = ({ navigation }) => {
           ))}
         </View>
       </ScrollView>
-
-
     </View>
   );
 };
@@ -407,7 +454,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.md,
     paddingBottom: spacing.xl,
-    backgroundColor: "#035db7",
+    backgroundColor: COLORS.primary,
     borderBottomLeftRadius: borderRadius.xl,
     borderBottomRightRadius: borderRadius.xl,
   },
@@ -473,7 +520,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
-    color: '#030213',
+    color: COLORS.blue,
     marginBottom: spacing.md,
   },
   infoRow: {
@@ -493,7 +540,7 @@ const styles = StyleSheet.create({
     color: '#030213',
   },
   status: {
-    color: '#10b981',
+    color: COLORS.blue,
   },
   addressSection: {
     marginTop: spacing.xl,
@@ -518,7 +565,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#10b981',
+    backgroundColor: COLORS.primary,
     paddingVertical: 12,
     borderRadius: 12,
   },
@@ -609,7 +656,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     marginBottom: spacing.sm,
     borderLeftWidth: 4,
-    borderLeftColor: '#10b981',
+    borderLeftColor: COLORS.blue,
   },
   itemHeader: {
     flexDirection: 'row',
@@ -626,7 +673,7 @@ const styles = StyleSheet.create({
   itemTotal: {
     fontSize: fontSize.md,
     fontWeight: '600',
-    color: '#10b981',
+    color: COLORS.blue,
   },
   itemDetails: {
     flexDirection: 'row',

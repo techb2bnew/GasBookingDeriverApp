@@ -6,13 +6,14 @@ import {
 } from 'react-native';
 import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { COLORS } from '../utils/constants';
 
 const StatusButton = ({title, icon, onPress, disabled = false, color = '#035db7'}) => {
   return (
     <TouchableOpacity
       style={[
         styles.button, 
-        { backgroundColor: color },
+        { backgroundColor:COLORS.blue},
         disabled && styles.buttonDisabled
       ]}
       onPress={onPress}

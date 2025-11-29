@@ -18,6 +18,7 @@ import { useAuth } from '../context/AuthContext';
 import { fontSize, spacing, borderRadius, wp, hp } from '../utils/dimensions';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService } from '../services/authService';
+import { COLORS } from '../utils/constants';
 
 const EditProfileScreen = ({ navigation }) => {
   const { user, updateUser } = useAuth();
@@ -111,14 +112,17 @@ const EditProfileScreen = ({ navigation }) => {
         { text: 'Gallery', onPress: () => openImageLibrary() },
         { text: 'Cancel', style: 'cancel' },
       ],
-      { cancelable: true }
+      { cancelable: true },
     );
   };
 
   const openCamera = async () => {
     const hasPermission = await requestCameraPermission();
     if (!hasPermission) {
-      Alert.alert('Permission Denied', 'Camera permission is required to take photos');
+      Alert.alert(
+        'Permission Denied',
+        'Camera permission is required to take photos',
+      );
       return;
     }
 
@@ -130,7 +134,7 @@ const EditProfileScreen = ({ navigation }) => {
       quality: 0.8,
     };
 
-    launchCamera(options, (response) => {
+    launchCamera(options, response => {
       if (response.didCancel || response.errorMessage) {
         return;
       }
@@ -151,7 +155,7 @@ const EditProfileScreen = ({ navigation }) => {
       quality: 0.8,
     };
 
-    launchImageLibrary(options, (response) => {
+    launchImageLibrary(options, response => {
       if (response.didCancel || response.errorMessage) {
         return;
       }
@@ -190,22 +194,28 @@ const EditProfileScreen = ({ navigation }) => {
     // PAN validation
     if (!formData.panCardNumber.trim()) {
       newErrors.panCardNumber = 'PAN number is required';
-    } else if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.panCardNumber.toUpperCase())) {
+    } else if (
+      !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.panCardNumber.toUpperCase())
+    ) {
       newErrors.panCardNumber = 'Please enter a valid PAN number';
     }
 
     // Aadhar validation
     if (!formData.aadharCardNumber.trim()) {
       newErrors.aadharCardNumber = 'Aadhar number is required';
-    } else if (!/^[0-9]{12}$/.test(formData.aadharCardNumber.replace(/\s/g, ''))) {
-      newErrors.aadharCardNumber = 'Please enter a valid 12-digit Aadhar number';
+    } else if (
+      !/^[0-9]{12}$/.test(formData.aadharCardNumber.replace(/\s/g, ''))
+    ) {
+      newErrors.aadharCardNumber =
+        'Please enter a valid 12-digit Aadhar number';
     }
 
     // License validation
     if (!formData.drivingLicence.trim()) {
       newErrors.drivingLicence = 'Driving license number is required';
     } else if (formData.drivingLicence.trim().length < 5) {
-      newErrors.drivingLicence = 'Driving license must be at least 5 characters';
+      newErrors.drivingLicence =
+        'Driving license must be at least 5 characters';
     }
 
     setErrors(newErrors);
@@ -227,7 +237,17 @@ const EditProfileScreen = ({ navigation }) => {
     }
   };
 
-  const renderInput = (label, field, placeholder, keyboardType = 'default', required = false, autoCapitalize = 'words', maxLength = null, editable = true, multiline = false) => (
+  const renderInput = (
+    label,
+    field,
+    placeholder,
+    keyboardType = 'default',
+    required = false,
+    autoCapitalize = 'words',
+    maxLength = null,
+    editable = true,
+    multiline = false,
+  ) => (
     <View style={styles.inputContainer}>
       <Text style={styles.inputLabel}>
         {label} {required && <Text style={styles.required}>*</Text>}
@@ -240,18 +260,18 @@ const EditProfileScreen = ({ navigation }) => {
         //   multiline && styles.textInputMultiline
         // ]}
         value={formData[field]}
-        onChangeText={(value) => handleInputChange(field, value)}
+        onChangeText={value => handleInputChange(field, value)}
         placeholder={placeholder}
         keyboardType={keyboardType}
         placeholderTextColor="#717182"
         autoCapitalize={autoCapitalize}
         autoCorrect={false}
-        returnKeyType={multiline ? "default" : "next"}
+        returnKeyType={multiline ? 'default' : 'next'}
         clearButtonMode="while-editing"
         blurOnSubmit={!multiline}
         multiline={multiline}
         numberOfLines={multiline ? 4 : 1}
-        textAlignVertical={multiline ? "top" : "center"}
+        textAlignVertical={multiline ? 'top' : 'center'}
         maxLength={maxLength}
         // editable={editable}
       />
@@ -286,16 +306,26 @@ const EditProfileScreen = ({ navigation }) => {
       };
 
       // Use image upload service if image is selected, otherwise use regular update
-      const result = profileImage 
-        ? await authService.updateProfileWithImage(token, profileUpdateData, profileImage)
-        : await authService.updateComprehensiveProfile(token, profileUpdateData);
+      const result = profileImage
+        ? await authService.updateProfileWithImage(
+            token,
+            profileUpdateData,
+            profileImage,
+          )
+        : await authService.updateComprehensiveProfile(
+            token,
+            profileUpdateData,
+          );
 
       if (result.success) {
         Alert.alert('Success', 'Profile updated successfully', [
-          { text: 'OK', onPress: () => navigation.goBack() }
+          { text: 'OK', onPress: () => navigation.goBack() },
         ]);
       } else {
-        Alert.alert('Error', result.error || 'Failed to update profile. Please try again.');
+        Alert.alert(
+          'Error',
+          result.error || 'Failed to update profile. Please try again.',
+        );
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to update profile. Please try again.');
@@ -308,9 +338,15 @@ const EditProfileScreen = ({ navigation }) => {
     <View style={styles.imageUploadSection}>
       <Text style={styles.sectionTitle}>Profile Picture</Text>
       <View style={styles.imageUploadContainer}>
-        <TouchableOpacity style={styles.imageUploadButton} onPress={showImagePicker}>
+        <TouchableOpacity
+          style={styles.imageUploadButton}
+          onPress={showImagePicker}
+        >
           {imageUri ? (
-            <Image source={{ uri: imageUri }} style={styles.profileImagePreview} />
+            <Image
+              source={{ uri: imageUri }}
+              style={styles.profileImagePreview}
+            />
           ) : (
             <View style={styles.imagePlaceholder}>
               <Icon name="camera-alt" size={40} color="#6b7280" />
@@ -319,10 +355,13 @@ const EditProfileScreen = ({ navigation }) => {
           )}
         </TouchableOpacity>
         {imageUri && (
-          <TouchableOpacity style={styles.removeImageButton} onPress={() => {
-            setImageUri(null);
-            setProfileImage(null);
-          }}>
+          <TouchableOpacity
+            style={styles.removeImageButton}
+            onPress={() => {
+              setImageUri(null);
+              setProfileImage(null);
+            }}
+          >
             <Icon name="close" size={20} color="#ef4444" />
           </TouchableOpacity>
         )}
@@ -333,33 +372,96 @@ const EditProfileScreen = ({ navigation }) => {
   const renderFormContent = () => (
     <>
       {renderImageUpload()}
-      
+
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Personal Information</Text>
 
-        {renderInput('Full Name', 'name', 'Enter your full name', 'default', true, 'words')}
-        {renderInput('Phone Number', 'phone', 'Enter your phone number', 'phone-pad', true, 'none', 15, false)}
-        {renderInput('Address', 'address', 'Enter your address', 'default', false, 'words')}
+        {renderInput(
+          'Full Name',
+          'name',
+          'Enter your full name',
+          'default',
+          true,
+          'words',
+        )}
+        {renderInput(
+          'Phone Number',
+          'phone',
+          'Enter your phone number',
+          'phone-pad',
+          true,
+          'none',
+          15,
+          false,
+        )}
+        {renderInput(
+          'Address',
+          'address',
+          'Enter your address',
+          'default',
+          false,
+          'words',
+        )}
       </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Vehicle Information</Text>
 
-        {renderInput('Vehicle Number', 'vehicleNumber', 'Enter vehicle registration number', 'default', true, 'characters')}
+        {renderInput(
+          'Vehicle Number',
+          'vehicleNumber',
+          'Enter vehicle registration number',
+          'default',
+          true,
+          'characters',
+        )}
       </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Document Information</Text>
 
-        {renderInput('PAN Number', 'panCardNumber', 'Enter your PAN number', 'default', true, 'characters', 10)}
-        {renderInput('Aadhar Number', 'aadharCardNumber', 'Enter your Aadhar number', 'numeric', true, 'none', 12)}
-        {renderInput('Driving License', 'drivingLicence', 'Enter your driving license number', 'default', true, 'characters')}
+        {renderInput(
+          'PAN Number',
+          'panCardNumber',
+          'Enter your PAN number',
+          'default',
+          true,
+          'characters',
+          10,
+        )}
+        {renderInput(
+          'Aadhar Number',
+          'aadharCardNumber',
+          'Enter your Aadhar number',
+          'numeric',
+          true,
+          'none',
+          12,
+        )}
+        {renderInput(
+          'Driving License',
+          'drivingLicence',
+          'Enter your driving license number',
+          'default',
+          true,
+          'characters',
+        )}
       </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Bank Details</Text>
 
-        {renderInput('Bank Details', 'bankDetails', 'Enter bank name, account number, IFSC code', 'default', false, 'words', null, true, true)}
+        {renderInput(
+          'Bank Details',
+          'bankDetails',
+          'Enter bank name, account number, IFSC code',
+          'default',
+          false,
+          'words',
+          null,
+          true,
+          true,
+        )}
       </View>
     </>
   );
@@ -367,7 +469,10 @@ const EditProfileScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
           <Icon name="arrow-back" size={24} color="#ffffff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Profile</Text>
@@ -376,7 +481,12 @@ const EditProfileScreen = ({ navigation }) => {
           style={[styles.saveButton, loading && styles.saveButtonDisabled]}
           disabled={loading}
         >
-          <Text style={[styles.saveButtonText, loading && styles.saveButtonTextDisabled]}>
+          <Text
+            style={[
+              styles.saveButtonText,
+              loading && styles.saveButtonTextDisabled,
+            ]}
+          >
             {loading ? 'Saving...' : 'Save'}
           </Text>
         </TouchableOpacity>
@@ -417,7 +527,7 @@ const EditProfileScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff' // White background
+    backgroundColor: '#ffffff', // White background
   },
   keyboardContainer: { flex: 1 },
   header: {
@@ -427,7 +537,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.md,
     paddingBottom: spacing.xl,
-    backgroundColor: "#035db7",
+    backgroundColor: COLORS.primary,
     borderBottomLeftRadius: borderRadius.xl,
     borderBottomRightRadius: borderRadius.xl,
   },
@@ -435,19 +545,19 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
-    color: '#ffffff' // White text
+    color: '#ffffff', // White text
   },
   saveButton: {
     backgroundColor: '#ffff', // Blue
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
-    borderRadius: spacing.sm
+    borderRadius: spacing.sm,
   },
   saveButtonDisabled: { backgroundColor: '#6b7280' }, // Gray when disabled
   saveButtonText: {
     color: '#100f0fff', // White text
     fontSize: fontSize.sm,
-    fontWeight: '600'
+    fontWeight: '600',
   },
   saveButtonTextDisabled: { color: '#b8b8b8' },
   content: { flex: 1, paddingHorizontal: spacing.xl },
@@ -456,15 +566,15 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.md,
     fontWeight: '600',
-    color: '#1f2937', // Dark text
-    marginBottom: spacing.lg
+    color:COLORS.blue,
+    marginBottom: spacing.lg,
   },
   inputContainer: { marginBottom: 20 },
   inputLabel: {
     fontSize: fontSize.sm,
     fontWeight: '500',
     color: '#1f2937', // Dark text
-    marginBottom: spacing.sm
+    marginBottom: spacing.sm,
   },
   required: { color: '#ef4444' }, // Red
   textInput: {

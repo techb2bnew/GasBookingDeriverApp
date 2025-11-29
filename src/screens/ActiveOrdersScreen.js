@@ -15,6 +15,7 @@ import OrderCard from '../components/OrderCard';
 import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService } from '../services/authService';
+import { COLORS } from '../utils/constants';
 
 const ActiveOrdersScreen = ({ navigation }) => {
   const { deliveryAgent } = useAuth();
@@ -30,14 +31,14 @@ const ActiveOrdersScreen = ({ navigation }) => {
   const fetchActiveOrders = async () => {
     try {
       setLoading(true);
-      
+
       // If agent is offline, don't fetch orders
       if (deliveryAgent?.status !== 'online') {
         console.log('Agent is offline, not fetching active orders');
         setActiveOrders([]);
         return;
       }
-      
+
       // Get token from AsyncStorage
       const token = await AsyncStorage.getItem('authToken');
       if (!token) {
@@ -47,7 +48,7 @@ const ActiveOrdersScreen = ({ navigation }) => {
 
       // Call API to get active orders (out_for_delivery status)
       const result = await authService.getActiveOrders(token);
-      
+
       if (result.success) {
         console.log('Active orders fetched:', result.orders);
         setActiveOrders(result.orders);
@@ -69,10 +70,10 @@ const ActiveOrdersScreen = ({ navigation }) => {
     setRefreshing(false);
   };
 
-  const handleOrderClick = async (orderId) => {
+  const handleOrderClick = async orderId => {
     try {
       setLoading(true);
-      
+
       // Get token from AsyncStorage
       const token = await AsyncStorage.getItem('authToken');
       if (!token) {
@@ -83,7 +84,7 @@ const ActiveOrdersScreen = ({ navigation }) => {
 
       // Fetch order details
       const result = await authService.getOrderById(token, orderId);
-      
+
       if (result.success) {
         console.log('Order details fetched:', result.order);
         // Set the order in context for order detail screen
@@ -115,11 +116,12 @@ const ActiveOrdersScreen = ({ navigation }) => {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}>
+          onPress={() => navigation.goBack()}
+        >
           <Icon name="arrow-back" size={24} color="#ffffff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Active Orders</Text>
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={onRefresh}
           disabled={deliveryAgent?.status !== 'online' || loading}
           style={{ opacity: deliveryAgent?.status === 'online' ? 1 : 0.5 }}
@@ -174,7 +176,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.md,
     paddingBottom: spacing.xl,
-    backgroundColor: "#035db7",
+    backgroundColor: COLORS.primary,
     borderBottomLeftRadius: borderRadius.xl,
     borderBottomRightRadius: borderRadius.xl,
   },
@@ -200,7 +202,7 @@ const styles = StyleSheet.create({
   emptyStateTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
-    color: '#1f2937',
+    color: COLORS.blue,
     marginTop: spacing.lg,
   },
   emptyStateSubtitle: {

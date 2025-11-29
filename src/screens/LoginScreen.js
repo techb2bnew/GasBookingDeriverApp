@@ -16,8 +16,16 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import OTPTextInput from 'react-native-otp-textinput';
 import { useAuth } from '../context/AuthContext';
 import { authService } from '../services/authService';
-import { wp, hp, fontSize, spacing, borderRadius, widthPercentageToDP, heightPercentageToDP } from '../utils/dimensions';
-import { SUPPORT_CONTACT } from '../utils/constants';
+import {
+  wp,
+  hp,
+  fontSize,
+  spacing,
+  borderRadius,
+  widthPercentageToDP,
+  heightPercentageToDP,
+} from '../utils/dimensions';
+import { COLORS, SUPPORT_CONTACT } from '../utils/constants';
 import { Modal, Linking } from 'react-native';
 
 const LoginScreen = () => {
@@ -38,7 +46,7 @@ const LoginScreen = () => {
     let interval = null;
     if (resendTimer > 0) {
       interval = setInterval(() => {
-        setResendTimer((prev) => {
+        setResendTimer(prev => {
           if (prev <= 1) {
             setIsResendDisabled(false);
             return 0;
@@ -51,12 +59,18 @@ const LoginScreen = () => {
   }, [resendTimer]);
 
   useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
-      setKeyboardVisible(true);
-    });
-    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
-      setKeyboardVisible(false);
-    });
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      () => {
+        setKeyboardVisible(true);
+      },
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      () => {
+        setKeyboardVisible(false);
+      },
+    );
 
     return () => {
       keyboardDidHideListener?.remove();
@@ -111,10 +125,16 @@ const LoginScreen = () => {
         setShowOtpInput(true);
         // Don't start timer on initial send
       } else {
-        setErrors(prev => ({ ...prev, server: result.error || 'Failed to send OTP. Try again.' }));
+        setErrors(prev => ({
+          ...prev,
+          server: result.error || 'Failed to send OTP. Try again.',
+        }));
       }
     } catch (error) {
-      setErrors(prev => ({ ...prev, server: 'Failed to send OTP. Try again.' }));
+      setErrors(prev => ({
+        ...prev,
+        server: 'Failed to send OTP. Try again.',
+      }));
     } finally {
       setSendingOtp(false);
     }
@@ -128,10 +148,16 @@ const LoginScreen = () => {
       setVerifyingOtp(true);
       const result = await login(phoneNumber, otp);
       if (!result.success) {
-        setErrors(prev => ({ ...prev, server: result.error || 'Invalid OTP. Try again.' }));
+        setErrors(prev => ({
+          ...prev,
+          server: result.error || 'Invalid OTP. Try again.',
+        }));
       }
     } catch (error) {
-      setErrors(prev => ({ ...prev, server: 'Verification failed. Try again.' }));
+      setErrors(prev => ({
+        ...prev,
+        server: 'Verification failed. Try again.',
+      }));
     } finally {
       setVerifyingOtp(false);
     }
@@ -149,10 +175,16 @@ const LoginScreen = () => {
         setResendTimer(30); // 30 seconds timer
         setIsResendDisabled(true);
       } else {
-        setErrors(prev => ({ ...prev, server: result.error || 'Failed to resend OTP. Try again.' }));
+        setErrors(prev => ({
+          ...prev,
+          server: result.error || 'Failed to resend OTP. Try again.',
+        }));
       }
     } catch (error) {
-      setErrors(prev => ({ ...prev, server: 'Failed to resend OTP. Try again.' }));
+      setErrors(prev => ({
+        ...prev,
+        server: 'Failed to resend OTP. Try again.',
+      }));
     } finally {
       setResendingOtp(false);
     }
@@ -166,7 +198,7 @@ const LoginScreen = () => {
     setErrors({ phone: '', otp: '', server: '' });
   };
 
-  const formatTime = (seconds) => {
+  const formatTime = seconds => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
@@ -176,92 +208,70 @@ const LoginScreen = () => {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    >
       <View style={styles.backgroundGradient} />
-      <ScrollView 
+      <ScrollView
         style={styles.scrollContainer}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.content}>
-        {showOtpInput && <TouchableOpacity
-          style={styles.backButton}
-          onPress={handleBackToPhone}>
-          <Icon name="arrow-back" size={24} color="#1f2937" />
-          {/* <Text style={styles.backButtonText}>Back to Phone</Text> */}
-        </TouchableOpacity>}
-        <View style={styles.header}>
-          <View style={styles.logoContainer}>
-            <Image source={require('../assets/leadIcon.png')} style={styles.logoImage} />
+          {showOtpInput && (
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={handleBackToPhone}
+            >
+              <Icon name="arrow-back" size={24} color="#1f2937" />
+              {/* <Text style={styles.backButtonText}>Back to Phone</Text> */}
+            </TouchableOpacity>
+          )}
+          <View style={styles.header}>
+            <View style={styles.logoContainer}>
+              <Image
+                source={require('../assets/leadIcon.png')}
+                style={styles.logoImage}
+              />
+            </View>
+            <Text style={styles.title}>Leadway Rider</Text>
+            <Text style={styles.subtitle}>Sign in to start delivering</Text>
           </View>
-          <Text style={styles.title}>Leadway Rider</Text>
-          <Text style={styles.subtitle}>Sign in to start delivering</Text>
-        </View>
 
-        <View style={styles.form}>
-          {!showOtpInput ? (
-            <>
-              <View style={[styles.inputContainer, errors.phone ? styles.inputError : null]}>
-                <Icon name="email" size={20} color={errors.phone ? '#ef4444' : '#6b7280'} style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Email"
-                  placeholderTextColor="#6b7280"
-                  value={phoneNumber}
-                  onChangeText={(text) => {
-                    setPhoneNumber(text);
-                    if (errors.phone) setErrors(prev => ({ ...prev, phone: '' }));
-                  }}
-                  keyboardType="email-address"
-                  returnKeyType="done"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-              </View>
-              {Boolean(errors.phone) && <Text style={styles.fieldError}>{errors.phone}</Text>}
-              {Boolean(errors.server) && (
-                <View style={styles.errorBanner}>
-                  <Icon name="error-outline" size={18} color="#ef4444" />
-                  <Text style={styles.errorBannerText}>{errors.server}</Text>
-                </View>
-              )}
-              <TouchableOpacity
-                style={[styles.loginButton, (loading || sendingOtp) && styles.loginButtonDisabled]}
-                onPress={handleSendOtp}
-                disabled={loading || sendingOtp}>
-                {sendingOtp ? (
-                  <ActivityIndicator color="#ffffff" />
-                ) : (
-                  <Text style={styles.loginButtonText}>Send OTP</Text>
-                )}
-              </TouchableOpacity>
-            </>
-          ) : (
-            <>
-              <View style={styles.otpSection}>
-                <Text style={styles.otpLabel}>
-                  We've sent a 6-digit code to {'\n'}
-                  <Text style={styles.phoneHighlight}>{phoneNumber}</Text>
-                </Text>
-
-                <View style={styles.otpInputWrapper}>
-                  <OTPTextInput
-                    handleTextChange={(text) => {
-                      setOtp(text);
-                      if (errors.otp) setErrors(prev => ({ ...prev, otp: '' }));
+          <View style={styles.form}>
+            {!showOtpInput ? (
+              <>
+                <View
+                  style={[
+                    styles.inputContainer,
+                    errors.phone ? styles.inputError : null,
+                  ]}
+                >
+                  <Icon
+                    name="email"
+                    size={20}
+                    color={errors.phone ? '#ef4444' : '#6b7280'}
+                    style={styles.inputIcon}
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Email"
+                    placeholderTextColor="#6b7280"
+                    value={phoneNumber}
+                    onChangeText={text => {
+                      setPhoneNumber(text);
+                      if (errors.phone)
+                        setErrors(prev => ({ ...prev, phone: '' }));
                     }}
-                    containerStyle={styles.otpInputContainer}
-                    textInputStyle={styles.otpInput}
-                    tintColor="#1f2937"
-                    offTintColor="#6b7280"
-                    defaultValue=""
-                    keyboardType="numeric"
-                    autoFocus={true}
-                    inputCount={6}
+                    keyboardType="email-address"
+                    returnKeyType="done"
+                    autoCapitalize="none"
+                    autoCorrect={false}
                   />
                 </View>
-
-                {Boolean(errors.otp) && <Text style={styles.fieldError}>{errors.otp}</Text>}
+                {Boolean(errors.phone) && (
+                  <Text style={styles.fieldError}>{errors.phone}</Text>
+                )}
                 {Boolean(errors.server) && (
                   <View style={styles.errorBanner}>
                     <Icon name="error-outline" size={18} color="#ef4444" />
@@ -269,68 +279,139 @@ const LoginScreen = () => {
                   </View>
                 )}
                 <TouchableOpacity
-                  style={[styles.loginButton, (loading || verifyingOtp) && styles.loginButtonDisabled]}
-                  onPress={handleVerifyOtp}
-                  disabled={loading || verifyingOtp}>
-                  {verifyingOtp ? (
+                  style={[
+                    styles.loginButton,
+                    (loading || sendingOtp) && styles.loginButtonDisabled,
+                  ]}
+                  onPress={handleSendOtp}
+                  disabled={loading || sendingOtp}
+                >
+                  {sendingOtp ? (
                     <ActivityIndicator color="#ffffff" />
                   ) : (
-                    <Text style={styles.loginButtonText}>Verify & Continue</Text>
+                    <Text style={styles.loginButtonText}>Send OTP</Text>
                   )}
                 </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <View style={styles.otpSection}>
+                  <Text style={styles.otpLabel}>
+                    We've sent a 6-digit code to {'\n'}
+                    <Text style={styles.phoneHighlight}>{phoneNumber}</Text>
+                  </Text>
 
-                <View style={styles.resendContainer}>
-                  <Text style={styles.resendText}>Didn't receive the code? </Text>
-                  {isResendDisabled ? (
-                    <Text style={styles.timerText}>Resend in {formatTime(resendTimer)}</Text>
-                  ) : (
-                    <TouchableOpacity
-                      style={styles.resendButton}
-                      onPress={handleResendOtp}
-                      disabled={loading || resendingOtp}>
-                      {resendingOtp ? (
-                        <ActivityIndicator color="#035db7" />
-                      ) : (
-                        <Text style={styles.resendButtonText}>Resend</Text>
-                      )}
-                    </TouchableOpacity>
+                  <View style={styles.otpInputWrapper}>
+                    <OTPTextInput
+                      handleTextChange={text => {
+                        setOtp(text);
+                        if (errors.otp)
+                          setErrors(prev => ({ ...prev, otp: '' }));
+                      }}
+                      containerStyle={styles.otpInputContainer}
+                      textInputStyle={styles.otpInput}
+                      tintColor="#1f2937"
+                      offTintColor="#6b7280"
+                      defaultValue=""
+                      keyboardType="numeric"
+                      autoFocus={true}
+                      inputCount={6}
+                    />
+                  </View>
+
+                  {Boolean(errors.otp) && (
+                    <Text style={styles.fieldError}>{errors.otp}</Text>
                   )}
+                  {Boolean(errors.server) && (
+                    <View style={styles.errorBanner}>
+                      <Icon name="error-outline" size={18} color="#ef4444" />
+                      <Text style={styles.errorBannerText}>
+                        {errors.server}
+                      </Text>
+                    </View>
+                  )}
+                  <TouchableOpacity
+                    style={[
+                      styles.loginButton,
+                      (loading || verifyingOtp) && styles.loginButtonDisabled,
+                    ]}
+                    onPress={handleVerifyOtp}
+                    disabled={loading || verifyingOtp}
+                  >
+                    {verifyingOtp ? (
+                      <ActivityIndicator color="#ffffff" />
+                    ) : (
+                      <Text style={styles.loginButtonText}>
+                        Verify & Continue
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+
+                  <View style={styles.resendContainer}>
+                    <Text style={styles.resendText}>
+                      Didn't receive the code?{' '}
+                    </Text>
+                    {isResendDisabled ? (
+                      <Text style={styles.timerText}>
+                        Resend in {formatTime(resendTimer)}
+                      </Text>
+                    ) : (
+                      <TouchableOpacity
+                        style={styles.resendButton}
+                        onPress={handleResendOtp}
+                        disabled={loading || resendingOtp}
+                      >
+                        {resendingOtp ? (
+                          <ActivityIndicator color="#035db7" />
+                        ) : (
+                          <Text style={styles.resendButtonText}>Resend</Text>
+                        )}
+                      </TouchableOpacity>
+                    )}
+                  </View>
                 </View>
-              </View>
-            </>
-          )}
-
-
-        </View>
-      </View>
-      {/* Contact Support Button */}
-      <View style={styles.supportFooter}>
-        <TouchableOpacity onPress={() => setShowSupport(true)}>
-          <Text style={styles.supportText}>Contact Support</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Support Modal */}
-      <Modal
-        visible={showSupport}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowSupport(false)}>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Need help?</Text>
-            <TouchableOpacity onPress={() => Linking.openURL(`mailto:${SUPPORT_CONTACT.EMAIL}`)}>
-              <Text style={styles.modalLink}>{SUPPORT_CONTACT.EMAIL}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => Linking.openURL(`tel:${SUPPORT_CONTACT.PHONE}`)}>
-              <Text style={styles.modalLink}>{SUPPORT_CONTACT.PHONE}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.modalClose} onPress={() => setShowSupport(false)}>
-              <Text style={styles.modalCloseText}>Close</Text>
-            </TouchableOpacity>
+              </>
+            )}
           </View>
         </View>
-      </Modal>
+        {/* Contact Support Button */}
+        <View style={styles.supportFooter}>
+          <TouchableOpacity onPress={() => setShowSupport(true)}>
+            <Text style={styles.supportText}>Contact Support</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Support Modal */}
+        <Modal
+          visible={showSupport}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowSupport(false)}
+        >
+          <View style={styles.modalBackdrop}>
+            <View style={styles.modalCard}>
+              <Text style={styles.modalTitle}>Need help?</Text>
+              <TouchableOpacity
+                onPress={() =>
+                  Linking.openURL(`mailto:${SUPPORT_CONTACT.EMAIL}`)
+                }
+              >
+                <Text style={styles.modalLink}>{SUPPORT_CONTACT.EMAIL}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => Linking.openURL(`tel:${SUPPORT_CONTACT.PHONE}`)}
+              >
+                <Text style={styles.modalLink}>{SUPPORT_CONTACT.PHONE}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalClose}
+                onPress={() => setShowSupport(false)}
+              >
+                <Text style={styles.modalCloseText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -339,7 +420,7 @@ const LoginScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff' // White background
+    backgroundColor: '#ffffff', // White background
   },
   scrollContainer: {
     flex: 1,
@@ -364,8 +445,8 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     height: hp(45),
-    alignItems: "center",
-    justifyContent: "center"
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   logoContainer: {
     width: wp('30%'),
@@ -391,7 +472,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.xxl,
     fontWeight: '700',
-    color: '#1f2937', // Dark text
+    color: COLORS.blue, // Dark text
     marginTop: spacing.lg,
     textAlign: 'center',
     letterSpacing: -0.5,
@@ -404,8 +485,8 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   form: {
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     width: '100%',
   },
   inputContainer: {
@@ -415,7 +496,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.xl,
     paddingHorizontal: spacing.lg,
     borderWidth: 2,
-    width: "100%",
+    width: '100%',
     marginTop: 20,
     borderColor: '#e5e7eb', // Light border
     shadowColor: '#1f2937',
@@ -476,15 +557,15 @@ const styles = StyleSheet.create({
   },
   inputError: {
     borderColor: '#ef4444', // Red
-    backgroundColor: '#fef2f2' // Light red background
+    backgroundColor: '#fef2f2', // Light red background
   },
   loginButton: {
-    backgroundColor: '#035db7', // Blue
+    backgroundColor: COLORS.primary, // Blue
     borderRadius: borderRadius.xl,
-    paddingVertical: Platform.OS === "ios" ? 12 : 8,
+    paddingVertical: Platform.OS === 'ios' ? 12 : 8,
     alignItems: 'center',
     marginTop: spacing.xxl,
-    width: "100%",
+    width: '100%',
     marginBottom: 20,
     shadowColor: '#035db7',
     shadowOffset: {
@@ -515,7 +596,6 @@ const styles = StyleSheet.create({
     top: 20,
     left: spacing.xl,
     zIndex: 1000,
-
   },
   backButtonText: {
     color: '#1f2937', // Dark text
@@ -526,7 +606,7 @@ const styles = StyleSheet.create({
 
   // OTP Section Styles
   otpSection: {
-    width: "100%",
+    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -665,7 +745,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: fontSize.sm,
     fontWeight: '600',
-  }
+  },
 });
 
 export default LoginScreen;

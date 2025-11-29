@@ -13,6 +13,7 @@ import { useAuth } from '../context/AuthContext';
 import { authService } from '../services/authService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fontSize, spacing, borderRadius, wp, hp } from '../utils/dimensions';
+import { COLORS } from '../utils/constants';
 
 const OrderHistoryScreen = ({ navigation }) => {
   const { deliveryAgent } = useAuth();
@@ -71,19 +72,23 @@ const OrderHistoryScreen = ({ navigation }) => {
 
   const getFilteredOrders = () => {
     if (filter === 'all') return orderHistory;
-    if (filter === 'delivered') return orderHistory.filter(order => order.status === 'delivered');
-    if (filter === 'cancelled') return orderHistory.filter(order => order.status === 'cancelled');
+    if (filter === 'delivered')
+      return orderHistory.filter(order => order.status === 'delivered');
+    if (filter === 'cancelled')
+      return orderHistory.filter(order => order.status === 'cancelled');
     return orderHistory;
   };
   const truncateText = (text, maxLength = 25) => {
     if (!text) return '';
-    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+    return text.length > maxLength
+      ? text.substring(0, maxLength) + '...'
+      : text;
   };
-  const capitalizeFirstLetter = (text) => {
+  const capitalizeFirstLetter = text => {
     if (!text) return '';
     return text.charAt(0).toUpperCase() + text.slice(1);
   };
-  const getStatusColor = (status) => {
+  const getStatusColor = status => {
     switch (status) {
       case 'delivered':
         return '#10b981';
@@ -96,7 +101,7 @@ const OrderHistoryScreen = ({ navigation }) => {
     }
   };
 
-  const getStatusIcon = (status) => {
+  const getStatusIcon = status => {
     switch (status) {
       case 'delivered':
         return 'check-circle';
@@ -109,34 +114,51 @@ const OrderHistoryScreen = ({ navigation }) => {
     }
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = dateString => {
     const date = new Date(dateString);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return (
+      date.toLocaleDateString() +
+      ' ' +
+      date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    );
   };
 
   const OrderItem = ({ order }) => (
     <View style={styles.orderItem}>
-        <View style={styles.orderHeader}>
-          <View style={styles.orderIdContainer}>
-            <Text style={styles.orderId}>#{truncateText(order.id, 25)}</Text>
-            <Text style={styles.orderDate}>{formatDate(order?.deliveredAt || order?.cancelledAt || order?.createdAt)}</Text>
-          </View>
-          <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(order?.status)}15` }]}>
-            <Icon
-              name={getStatusIcon(order?.status)}
-              size={12}
-              color={getStatusColor(order?.status)}
-            />
-            <Text style={[styles.statusText, { color: getStatusColor(order.status) }]}>
-              {order?.status.charAt(0).toUpperCase() + order?.status.slice(1)}
-            </Text>
-          </View>
+      <View style={styles.orderHeader}>
+        <View style={styles.orderIdContainer}>
+          <Text style={styles.orderId}>#{truncateText(order.id, 25)}</Text>
+          <Text style={styles.orderDate}>
+            {formatDate(
+              order?.deliveredAt || order?.cancelledAt || order?.createdAt,
+            )}
+          </Text>
         </View>
+        <View
+          style={[
+            styles.statusBadge,
+            { backgroundColor: `${getStatusColor(order?.status)}15` },
+          ]}
+        >
+          <Icon
+            name={getStatusIcon(order?.status)}
+            size={12}
+            color={getStatusColor(order?.status)}
+          />
+          <Text
+            style={[styles.statusText, { color: getStatusColor(order.status) }]}
+          >
+            {order?.status.charAt(0).toUpperCase() + order?.status.slice(1)}
+          </Text>
+        </View>
+      </View>
 
       <View style={styles.orderDetails}>
         <View style={styles.detailRow}>
           <Icon name="person" size={16} color="#717182" />
-          <Text style={styles.detailText}>{capitalizeFirstLetter(order?.customerName)}</Text>
+          <Text style={styles.detailText}>
+            {capitalizeFirstLetter(order?.customerName)}
+          </Text>
         </View>
         <View style={styles.detailRow}>
           <Icon name="location-on" size={16} color="#717182" />
@@ -153,8 +175,14 @@ const OrderHistoryScreen = ({ navigation }) => {
   const FilterButton = ({ title, value, active }) => (
     <TouchableOpacity
       style={[styles.filterButton, active && styles.filterButtonActive]}
-      onPress={() => setFilter(value)}>
-      <Text style={[styles.filterButtonText, active && styles.filterButtonTextActive]}>
+      onPress={() => setFilter(value)}
+    >
+      <Text
+        style={[
+          styles.filterButtonText,
+          active && styles.filterButtonTextActive,
+        ]}
+      >
         {title}
       </Text>
     </TouchableOpacity>
@@ -169,30 +197,36 @@ const OrderHistoryScreen = ({ navigation }) => {
       {/* Stats Section */}
       {stats && Object.keys(stats).length > 0 && (
         <View style={styles.statsContainer}>
-          <TouchableOpacity 
-            style={styles.statCard} 
+          <TouchableOpacity
+            style={styles.statCard}
             onPress={() => {
               console.log('Navigating to Dashboard...');
               navigation.navigate('Dashboard');
             }}
           >
-            <Text style={styles.statNumber}>{stats?.assignedOrders || '0'}</Text>
+            <Text style={styles.statNumber}>
+              {stats?.assignedOrders || '0'}
+            </Text>
             <Text style={styles.statLabel}>Pending</Text>
           </TouchableOpacity>
           {deliveryAgent?.status === 'online' && (
-            <TouchableOpacity 
-              style={styles.statCard} 
+            <TouchableOpacity
+              style={styles.statCard}
               onPress={() => {
                 console.log('Navigating to ActiveOrders...');
                 navigation.navigate('ActiveOrders');
               }}
             >
-              <Text style={styles.statNumber}>{stats?.outForDeliveryOrders || '0'}</Text>
+              <Text style={styles.statNumber}>
+                {stats?.outForDeliveryOrders || '0'}
+              </Text>
               <Text style={styles.statLabel}>Active</Text>
             </TouchableOpacity>
           )}
           <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{stats?.totalDeliveredOrders || 0}</Text>
+            <Text style={styles.statNumber}>
+              {stats?.totalDeliveredOrders || 0}
+            </Text>
             <Text style={styles.statLabel}>Delivered</Text>
           </View>
           <View style={styles.statCard}>
@@ -204,8 +238,16 @@ const OrderHistoryScreen = ({ navigation }) => {
 
       <View style={styles.filterContainer}>
         <FilterButton title="All" value="all" active={filter === 'all'} />
-        <FilterButton title="Delivered" value="delivered" active={filter === 'delivered'} />
-        <FilterButton title="Cancelled" value="cancelled" active={filter === 'cancelled'} />
+        <FilterButton
+          title="Delivered"
+          value="delivered"
+          active={filter === 'delivered'}
+        />
+        <FilterButton
+          title="Cancelled"
+          value="cancelled"
+          active={filter === 'cancelled'}
+        />
       </View>
 
       {getFilteredOrders().length === 0 ? (
@@ -214,9 +256,8 @@ const OrderHistoryScreen = ({ navigation }) => {
           <Text style={styles.emptyStateTitle}>No orders found</Text>
           <Text style={styles.emptyStateSubtitle}>
             {filter === 'all'
-              ? 'You haven\'t completed any orders yet'
-              : `No ${filter} orders found`
-            }
+              ? "You haven't completed any orders yet"
+              : `No ${filter} orders found`}
           </Text>
         </View>
       ) : (
@@ -242,9 +283,9 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: spacing.xl,
-     paddingTop: spacing.md,
+    paddingTop: spacing.md,
     paddingBottom: spacing.xl,
-    backgroundColor: "#035db7",
+    backgroundColor: COLORS.primary,
     borderBottomLeftRadius: borderRadius.xl,
     borderBottomRightRadius: borderRadius.xl,
   },
@@ -291,11 +332,11 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   filterButtonActive: {
-    backgroundColor: '#035db7', // Blue
+    backgroundColor: COLORS.primary,
   },
   filterButtonText: {
     fontSize: fontSize.sm,
-    color: '#6b7280', // Gray text
+    color: COLORS.blue,
     fontWeight: '500',
   },
   filterButtonTextActive: {
@@ -310,7 +351,7 @@ const styles = StyleSheet.create({
   emptyStateTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
-    color: '#1f2937', // Dark text
+    color:COLORS.blue,
     marginTop: spacing.lg,
   },
   emptyStateSubtitle: {
@@ -342,7 +383,7 @@ const styles = StyleSheet.create({
   orderId: {
     fontSize: fontSize.md,
     fontWeight: '600',
-    color: '#1f2937',
+    color: COLORS.blue,
     marginBottom: spacing.xs,
   },
   statusBadge: {

@@ -27,6 +27,7 @@ import TermsOfServiceScreen from './src/screens/TermsOfServiceScreen';
 import DriverAgreementScreen from './src/screens/DriverAgreementScreen';
 import ActiveOrdersScreen from './src/screens/ActiveOrdersScreen';
 import { borderRadius, fontSize, spacing } from './src/utils/dimensions';
+import { COLORS } from './src/utils/constants';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -73,7 +74,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
               <Icon
                 name={iconName}
                 size={24}
-                color={isFocused ? '#ffffff' : '#64748b'}
+                color={isFocused ? '#ffffff' : COLORS.blue}
               />
               <Text style={[
                 styles.tabLabel,
@@ -98,7 +99,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.md,
     paddingTop: spacing.md,
     paddingHorizontal: Platform.OS === "ios" ? 0 : spacing.md,
-    marginVertical: spacing.sm,
+    marginVertical: 10,
     marginHorizontal: spacing.xl,
     borderRadius: borderRadius.lg,
     shadowColor: '#000',
@@ -127,14 +128,14 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   tabContentActive: {
-    backgroundColor: '#035db7',
+    backgroundColor: COLORS.primary,
     borderRadius: borderRadius.xl,
   },
   tabLabel: {
     fontSize: Platform.OS === "ios" ? fontSize.sm : fontSize.sm,
     fontWeight: '700',
     marginTop: spacing.sm,
-    color: '#64748b',
+    color: COLORS.blue,
     letterSpacing: 0.5,
   },
   tabLabelActive: {
@@ -211,7 +212,7 @@ const App = () => {
   }
 
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider style={{flex: 1}}>
       <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }} edges={['top', 'left', 'right']}>
         <View style={{ flex: 1, backgroundColor: '#ffffff' }}>
           <AuthProvider>

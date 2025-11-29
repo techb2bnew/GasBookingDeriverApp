@@ -101,8 +101,10 @@ export const APP_PERMISSIONS = {
 };
 
 export const ERROR_MESSAGES = {
-  NETWORK_ERROR: 'Network connection error. Please check your internet connection.',
-  LOCATION_ERROR: 'Unable to get your location. Please enable location services.',
+  NETWORK_ERROR:
+    'Network connection error. Please check your internet connection.',
+  LOCATION_ERROR:
+    'Unable to get your location. Please enable location services.',
   CAMERA_ERROR: 'Camera permission denied. Please enable camera access.',
   ORDER_NOT_FOUND: 'Order not found or has been canceled.',
   PAYMENT_FAILED: 'Payment failed. Please try again.',
@@ -121,8 +123,8 @@ export const SUCCESS_MESSAGES = {
 };
 
 export const API_ENDPOINTS = {
-  BASE_URL: 'https://3535e646162b.ngrok-free.app',
-  SOCKET_URL: 'https://3535e646162b.ngrok-free.app',
+  BASE_URL: 'https://7d1510928719.ngrok-free.app',
+  SOCKET_URL: 'https://7d1510928719.ngrok-free.app',
   ORDERS: '/orders',
   PROFILE: '/profile',
   AUTH: '/auth',
@@ -177,3 +179,8 @@ export const ORDER_STATUS_FLOW = [
   ORDER_STATUS.HEADING_TO_CUSTOMER,
   ORDER_STATUS.DELIVERED,
 ];
+
+export const COLORS = {
+  primary: '#DC143C',
+  blue: '#008ED8',
+};

@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
+import { COLORS } from '../utils/constants';
 
 const OrderCard = ({ order, onAccept, buttonText = "Accept Order" }) => {
   const formatTime = (dateString) => {
@@ -112,7 +113,7 @@ const styles = StyleSheet.create({
   orderId: {
     fontSize: fontSize.md,
     fontWeight: '600',
-    color: '#1f2937', // Dark text
+    color:  COLORS.blue,
   },
   orderTime: {
     fontSize: fontSize.xs,
@@ -125,7 +126,7 @@ const styles = StyleSheet.create({
   earnings: {
     fontSize: fontSize.md,
     fontWeight: '600',
-    color: '#10b981',
+    color:COLORS.blue,
   },
   earningsLabel: {
     fontSize: fontSize.xs,
@@ -246,7 +247,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#035db7', // Blue background
+    backgroundColor: COLORS.primary,
     paddingVertical: spacing.md,
     borderRadius: spacing.md,
   },

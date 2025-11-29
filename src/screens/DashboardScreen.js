@@ -18,16 +18,14 @@ import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService } from '../services/authService';
 import { useForceLogout } from '../hooks/useForceLogout';
+import { COLORS } from '../utils/constants';
 
 const DashboardScreen = ({ navigation }) => {
   const { user, deliveryAgent, updateUser } = useAuth();
-  const {
-    availableOrders,
-    loading,
-    fetchAvailableOrders,
-    acceptOrder,
-  } = useOrder();
-  const { startLocationTracking, stopLocationTracking, isTracking } = useLocation();
+  const { availableOrders, loading, fetchAvailableOrders, acceptOrder } =
+    useOrder();
+  const { startLocationTracking, stopLocationTracking, isTracking } =
+    useLocation();
   const [refreshing, setRefreshing] = useState(false);
   const [showAcceptAlert, setShowAcceptAlert] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
@@ -59,7 +57,10 @@ const DashboardScreen = ({ navigation }) => {
       if (token) {
         const result = await authService.getProfile(token);
         if (result.success) {
-          await updateUser({ user: result.user, deliveryAgent: result.deliveryAgent });
+          await updateUser({
+            user: result.user,
+            deliveryAgent: result.deliveryAgent,
+          });
         }
       }
     } catch (error) {
@@ -73,7 +74,7 @@ const DashboardScreen = ({ navigation }) => {
     setRefreshing(false);
   };
 
-  const handleAcceptOrder = (orderId) => {
+  const handleAcceptOrder = orderId => {
     setSelectedOrderId(orderId);
     setShowAcceptAlert(true);
   };
@@ -99,7 +100,7 @@ const DashboardScreen = ({ navigation }) => {
     setSelectedOrderId(null);
   };
 
-  const handleStatusChange = (newStatus) => {
+  const handleStatusChange = newStatus => {
     setNewStatus(newStatus);
     setShowStatusAlert(true);
   };
@@ -121,7 +122,7 @@ const DashboardScreen = ({ navigation }) => {
         // Update the deliveryAgent status in context
         const updatedDeliveryAgent = { ...deliveryAgent, status: newStatus };
         await updateUser({ user, deliveryAgent: updatedDeliveryAgent });
-        
+
         if (newStatus === 'online') {
           await startLocationTracking();
           // Fetch orders when going online
@@ -149,10 +150,7 @@ const DashboardScreen = ({ navigation }) => {
   };
 
   const renderOrderItem = ({ item }) => (
-    <OrderCard
-      order={item}
-      onAccept={() => handleAcceptOrder(item?.id)}
-    />
+    <OrderCard order={item} onAccept={() => handleAcceptOrder(item?.id)} />
   );
 
   return (
@@ -162,8 +160,11 @@ const DashboardScreen = ({ navigation }) => {
           <Text style={styles.greeting}>Hello, {user?.name || 'Driver'}</Text>
           <Text style={styles.subtitle}>Ready to deliver?</Text>
         </View>
-        <TouchableOpacity
-          style={[styles.statusIndicator, deliveryAgent?.status === 'online' && styles.statusIndicatorActive]}
+        {/* <TouchableOpacity
+          style={[
+            styles.statusIndicator,
+            deliveryAgent?.status === 'online' && styles.statusIndicatorActive,
+          ]}
           onPress={() => {
             if (deliveryAgent?.status === 'online') {
               handleStatusChange('offline');
@@ -174,11 +175,21 @@ const DashboardScreen = ({ navigation }) => {
           activeOpacity={0.7}
           disabled={isUpdatingStatus}
         >
-          <View style={[styles.statusDot, deliveryAgent?.status === 'online' && styles.statusDotActive]} />
-          <Text style={[styles.statusText, deliveryAgent?.status === 'online' && styles.statusTextActive]}>
+          <View
+            style={[
+              styles.statusDot,
+              deliveryAgent?.status === 'online' && styles.statusDotActive,
+            ]}
+          />
+          <Text
+            style={[
+              styles.statusText,
+              deliveryAgent?.status === 'online' && styles.statusTextActive,
+            ]}
+          >
             {deliveryAgent?.status === 'online' ? 'Online' : 'Offline'}
           </Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
 
       <View style={styles.ordersSection}>
@@ -186,7 +197,7 @@ const DashboardScreen = ({ navigation }) => {
           <Text style={styles.sectionTitle}>Available Orders</Text>
           <View style={styles.headerActions}>
             {deliveryAgent?.status === 'online' && (
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.activeOrdersButton}
                 onPress={() => navigation.navigate('ActiveOrders')}
               >
@@ -194,12 +205,12 @@ const DashboardScreen = ({ navigation }) => {
                 <Text style={styles.activeOrdersButtonText}>Active Orders</Text>
               </TouchableOpacity>
             )}
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={onRefresh}
               disabled={deliveryAgent?.status !== 'online'}
-              style={{ 
-                opacity: deliveryAgent?.status === 'online' ? 1 : 0.5, 
-                marginLeft: deliveryAgent?.status === 'online' ? 12 : 0 
+              style={{
+                opacity: deliveryAgent?.status === 'online' ? 1 : 0.5,
+                marginLeft: deliveryAgent?.status === 'online' ? 12 : 0,
               }}
             >
               <Icon name="refresh" size={24} color="#030213" />
@@ -209,19 +220,20 @@ const DashboardScreen = ({ navigation }) => {
 
         {availableOrders.length === 0 ? (
           <View style={styles.emptyState}>
-            <Icon 
-              name={deliveryAgent?.status === 'online' ? "inbox" : "wifi-off"} 
-              size={64} 
-              color="#717182" 
+            <Icon
+              name={deliveryAgent?.status === 'online' ? 'inbox' : 'wifi-off'}
+              size={64}
+              color="#717182"
             />
             <Text style={styles.emptyStateTitle}>
-              {deliveryAgent?.status === 'online' ? 'No orders available' : 'You are offline'}
+              {deliveryAgent?.status === 'online'
+                ? 'No orders available'
+                : 'You are offline'}
             </Text>
             <Text style={styles.emptyStateSubtitle}>
-              {deliveryAgent?.status === 'online' 
+              {deliveryAgent?.status === 'online'
                 ? 'Pull down to refresh and check for new orders'
-                : 'Go online to see available orders'
-              }
+                : 'Go online to see available orders'}
             </Text>
           </View>
         ) : (
@@ -275,7 +287,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.md,
     paddingBottom: spacing.xl,
-    backgroundColor: "#035db7",
+    // backgroundColor: '#035db7',
+    backgroundColor: COLORS.primary,
     borderBottomLeftRadius: borderRadius.xl,
     borderBottomRightRadius: borderRadius.xl,
   },
@@ -298,7 +311,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.xl,
     borderWidth: 1,
     borderColor: '#035db7', // Blue border
-    backgroundColor: "red"
+    backgroundColor: 'red',
   },
   statusIndicatorActive: {
     backgroundColor: '#10b981', // Green background
@@ -326,7 +339,7 @@ const styles = StyleSheet.create({
   ordersSection: {
     flex: 1,
     paddingHorizontal: spacing.md,
-    marginTop: spacing.md
+    marginTop: spacing.md,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -341,7 +354,7 @@ const styles = StyleSheet.create({
   activeOrdersButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#10b981',
+    backgroundColor: COLORS.blue,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.sm,
@@ -355,7 +368,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
-    color: '#1f2937', // Dark text
+    color: COLORS.blue, // Dark text
   },
   emptyState: {
     flex: 1,
