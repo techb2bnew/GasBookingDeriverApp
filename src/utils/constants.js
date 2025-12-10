@@ -58,10 +58,10 @@ export const DELIVERY_RADIUS = {
 };
 
 export const EARNING_RATES = {
-  BASE_RATE: 50, // Base delivery fee
-  PER_KM_RATE: 5, // Per kilometer rate
-  PER_CYLINDER_RATE: 20, // Per cylinder bonus
-  PEAK_HOUR_BONUS: 1.5, // 50% bonus during peak hours
+  BASE_RATE: 50, 
+  PER_KM_RATE: 5, 
+  PER_CYLINDER_RATE: 20, 
+  PEAK_HOUR_BONUS: 1.5, 
 };
 
 export const PEAK_HOURS = {
@@ -123,8 +123,8 @@ export const SUCCESS_MESSAGES = {
 };
 
 export const API_ENDPOINTS = {
-  BASE_URL: 'https://7d1510928719.ngrok-free.app',
-  SOCKET_URL: 'https://7d1510928719.ngrok-free.app',
+  BASE_URL: 'https://9f052b426757.ngrok-free.app',
+  SOCKET_URL: 'https://9f052b426757.ngrok-free.app',
   ORDERS: '/orders',
   PROFILE: '/profile',
   AUTH: '/auth',
