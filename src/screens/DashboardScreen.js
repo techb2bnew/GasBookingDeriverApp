@@ -37,7 +37,7 @@ const DashboardScreen = ({ navigation }) => {
   useForceLogout();
 
   useEffect(() => {
-    fetchAvailableOrders(deliveryAgent?.status);
+    fetchAvailableOrders('online');
     fetchLatestProfile();
 
     (async () => {
@@ -49,7 +49,7 @@ const DashboardScreen = ({ navigation }) => {
         }
       }
     })();
-  }, [deliveryAgent?.status]);
+  }, ['online']);
 
   const fetchLatestProfile = async () => {
     try {
@@ -70,7 +70,7 @@ const DashboardScreen = ({ navigation }) => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchAvailableOrders(deliveryAgent?.status);
+    await fetchAvailableOrders('online');
     setRefreshing(false);
   };
 
@@ -116,11 +116,11 @@ const DashboardScreen = ({ navigation }) => {
         return;
       }
 
-      const result = await authService.updateAgentStatus(token, newStatus);
+      const result = await authService.updateAgentStatus(token, "online");
 
       if (result.success) {
         // Update the deliveryAgent status in context
-        const updatedDeliveryAgent = { ...deliveryAgent, status: newStatus };
+        const updatedDeliveryAgent = { ...deliveryAgent, status: "online" };
         await updateUser({ user, deliveryAgent: updatedDeliveryAgent });
 
         if (newStatus === 'online') {
@@ -160,13 +160,13 @@ const DashboardScreen = ({ navigation }) => {
           <Text style={styles.greeting}>Hello, {user?.name || 'Driver'}</Text>
           <Text style={styles.subtitle}>Ready to deliver?</Text>
         </View>
-        {/* <TouchableOpacity
+         {/* <TouchableOpacity
           style={[
             styles.statusIndicator,
-            deliveryAgent?.status === 'online' && styles.statusIndicatorActive,
+            'online' === 'online' && styles.statusIndicatorActive,
           ]}
           onPress={() => {
-            if (deliveryAgent?.status === 'online') {
+            if ('online' === 'online') {
               handleStatusChange('offline');
             } else {
               handleStatusChange('online');
@@ -178,25 +178,25 @@ const DashboardScreen = ({ navigation }) => {
           <View
             style={[
               styles.statusDot,
-              deliveryAgent?.status === 'online' && styles.statusDotActive,
+              'online' === 'online' && styles.statusDotActive,
             ]}
           />
           <Text
             style={[
               styles.statusText,
-              deliveryAgent?.status === 'online' && styles.statusTextActive,
+              'online' === 'online' && styles.statusTextActive,
             ]}
           >
-            {deliveryAgent?.status === 'online' ? 'Online' : 'Offline'}
+            {'online' === 'online' ? 'Online' : 'Offline'}
           </Text>
-        </TouchableOpacity> */}
+        </TouchableOpacity>  */}
       </View>
 
       <View style={styles.ordersSection}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Available Orders</Text>
           <View style={styles.headerActions}>
-            {deliveryAgent?.status === 'online' && (
+            {'online' === 'online' && (
               <TouchableOpacity
                 style={styles.activeOrdersButton}
                 onPress={() => navigation.navigate('ActiveOrders')}
@@ -207,10 +207,10 @@ const DashboardScreen = ({ navigation }) => {
             )}
             <TouchableOpacity
               onPress={onRefresh}
-              disabled={deliveryAgent?.status !== 'online'}
+              disabled={'online' !== 'online'}
               style={{
-                opacity: deliveryAgent?.status === 'online' ? 1 : 0.5,
-                marginLeft: deliveryAgent?.status === 'online' ? 12 : 0,
+                opacity: 'online' === 'online' ? 1 : 0.5,
+                marginLeft: 'online' === 'online' ? 12 : 0,
               }}
             >
               <Icon name="refresh" size={24} color="#030213" />
@@ -221,17 +221,17 @@ const DashboardScreen = ({ navigation }) => {
         {availableOrders.length === 0 ? (
           <View style={styles.emptyState}>
             <Icon
-              name={deliveryAgent?.status === 'online' ? 'inbox' : 'wifi-off'}
+              name={'online' === 'online' ? 'inbox' : 'wifi-off'}
               size={64}
               color="#717182"
             />
             <Text style={styles.emptyStateTitle}>
-              {deliveryAgent?.status === 'online'
+              {'online' === 'online'
                 ? 'No orders available'
                 : 'You are offline'}
             </Text>
             <Text style={styles.emptyStateSubtitle}>
-              {deliveryAgent?.status === 'online'
+              {'online' === 'online'
                 ? 'Pull down to refresh and check for new orders'
                 : 'Go online to see available orders'}
             </Text>
@@ -264,7 +264,7 @@ const DashboardScreen = ({ navigation }) => {
       <CustomAlert
         visible={showStatusAlert}
         title="Change Status"
-        message={`Are you sure you want to change your status to ${newStatus}?`}
+        message={`Are you sure you want to change your status to ${"online"}?`}
         type="warning"
         confirmText="Yes"
         cancelText="Cancel"

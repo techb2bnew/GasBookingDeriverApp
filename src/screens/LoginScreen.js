@@ -27,6 +27,7 @@ import {
 } from '../utils/dimensions';
 import { COLORS, SUPPORT_CONTACT } from '../utils/constants';
 import { Modal, Linking } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const LoginScreen = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -41,6 +42,9 @@ const LoginScreen = () => {
   const [resendingOtp, setResendingOtp] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const { login, loading } = useAuth();
+  const [fcmToken, setFcmToken] = useState('');
+console.log("fcmmm",fcmToken,);
+
 
   useEffect(() => {
     let interval = null;
@@ -139,14 +143,30 @@ const LoginScreen = () => {
       setSendingOtp(false);
     }
   };
+useEffect(() => {
+    const fetchFcmToken = async () => {
+      try {
+        const token = await AsyncStorage.getItem('fcmToken');
+        if (token) {
+          console.log('FCM token (from storage):', token);
+          setFcmToken(token);
+        } else {
+          console.log('No FCM token found in storage');
+        }
+      } catch (error) {
+        console.log('Error fetching FCM token:', error);
+      }
+    };
 
+    fetchFcmToken();
+  }, []);
   const handleVerifyOtp = async () => {
     if (!validateOtp()) return;
     setErrors(prev => ({ ...prev, server: '' }));
 
     try {
       setVerifyingOtp(true);
-      const result = await login(phoneNumber, otp);
+      const result = await login(phoneNumber, otp,fcmToken, Platform.OS);
       if (!result.success) {
         setErrors(prev => ({
           ...prev,

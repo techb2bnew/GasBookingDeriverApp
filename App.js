@@ -5,7 +5,15 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Toast from 'react-native-toast-message';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Platform,
+  PermissionsAndroid,
+  Alert,
+} from 'react-native';
 
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { OrderProvider } from './src/context/OrderContext';
@@ -28,6 +36,8 @@ import DriverAgreementScreen from './src/screens/DriverAgreementScreen';
 import ActiveOrdersScreen from './src/screens/ActiveOrdersScreen';
 import { borderRadius, fontSize, spacing } from './src/utils/dimensions';
 import { COLORS } from './src/utils/constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import messaging from '@react-native-firebase/messaging';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -67,19 +77,17 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
             onPress={onPress}
             style={styles.tabItem}
           >
-            <View style={[
-              styles.tabContent,
-              isFocused && styles.tabContentActive
-            ]}>
+            <View
+              style={[styles.tabContent, isFocused && styles.tabContentActive]}
+            >
               <Icon
                 name={iconName}
                 size={24}
                 color={isFocused ? '#ffffff' : COLORS.blue}
               />
-              <Text style={[
-                styles.tabLabel,
-                isFocused && styles.tabLabelActive
-              ]}>
+              <Text
+                style={[styles.tabLabel, isFocused && styles.tabLabelActive]}
+              >
                 {label}
               </Text>
             </View>
@@ -98,7 +106,7 @@ const styles = StyleSheet.create({
     height: 75,
     paddingBottom: spacing.md,
     paddingTop: spacing.md,
-    paddingHorizontal: Platform.OS === "ios" ? 0 : spacing.md,
+    paddingHorizontal: Platform.OS === 'ios' ? 0 : spacing.md,
     marginVertical: 10,
     marginHorizontal: spacing.xl,
     borderRadius: borderRadius.lg,
@@ -132,7 +140,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.xl,
   },
   tabLabel: {
-    fontSize: Platform.OS === "ios" ? fontSize.sm : fontSize.sm,
+    fontSize: Platform.OS === 'ios' ? fontSize.sm : fontSize.sm,
     fontWeight: '700',
     marginTop: spacing.sm,
     color: COLORS.blue,
@@ -150,11 +158,11 @@ const TabNavigator = () => {
       tabBar={props => <CustomTabBar {...props} />}
       screenOptions={{
         headerShown: false,
-      }}>
+      }}
+    >
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
       <Tab.Screen name="History" component={OrderHistoryScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
-
     </Tab.Navigator>
   );
 };
@@ -202,7 +210,88 @@ const AppNavigator = () => {
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
+  useEffect(() => {
+    const requestPermissions = async () => {
+      if (Platform.OS === 'ios') {
+        await requestUserIosPermission();
+      } else {
+        await requestNotificationPermission();
+      }
+    };
+    requestPermissions();
+  }, []);
+  useEffect(() => {
+    // Request location permission when app starts
+    // requestLocationPermission();
+  }, []);
+  const requestNotificationPermission = async () => {
+    if (Platform.OS === 'android' && Platform.Version >= 33) {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+          {
+            title: 'Notification Permission',
+            message: 'This app would like to send you notifications.',
+            buttonPositive: 'Allow',
+            buttonNegative: 'Deny',
+          },
+        );
 
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          getFcmToken();
+          console.log('Notification permission granted');
+        } else {
+          console.log('Notification permission denied');
+          Alert.alert(
+            'Permission Denied',
+            'You will not receive notifications.',
+          );
+        }
+      } catch (err) {
+        console.warn('Permission error:', err);
+      }
+    }
+  };
+  const requestUserIosPermission = async () => {
+    const authStatus = await messaging().requestPermission();
+    const enabled =
+      authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+      authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+
+    if (enabled) {
+      console.log('iOS Notification permission granted:', authStatus);
+      getFcmToken();
+    } else {
+      console.log('iOS Notification permission denied:', authStatus);
+    }
+  };
+
+  useEffect(() => {
+    // const unsubscribe = messaging().onMessage(async remoteMessage => {
+    //   Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage));
+    // });
+    // return unsubscribe;
+  }, []);
+
+  const getFcmToken = async () => {
+    try {
+      const existingToken = await AsyncStorage.getItem('fcmToken');
+      if (existingToken) {
+        console.log('FCM token (from storage):', existingToken);
+        return existingToken;
+      }
+
+      const token = await messaging().getToken();
+      console.log('fcmtoken>>', token);
+
+      if (token) {
+        await AsyncStorage.setItem('fcmToken', token);
+        return token;
+      }
+    } catch (error) {
+      console.log('Error getting FCM token:', error);
+    }
+  };
   const handleSplashFinish = () => {
     setShowSplash(false);
   };
@@ -212,8 +301,11 @@ const App = () => {
   }
 
   return (
-    <SafeAreaProvider style={{flex: 1}}>
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }} edges={['top', 'left', 'right']}>
+    <SafeAreaProvider style={{ flex: 1 }}>
+      <SafeAreaView
+        style={{ flex: 1, backgroundColor: '#ffffff' }}
+        edges={['top', 'left', 'right']}
+      >
         <View style={{ flex: 1, backgroundColor: '#ffffff' }}>
           <AuthProvider>
             <AppWithSocket />

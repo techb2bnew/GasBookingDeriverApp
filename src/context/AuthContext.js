@@ -75,10 +75,12 @@ export const AuthProvider = ({children}) => {
     }
   };
 
-  const login = async (email, otp) => {
+  const login = async (email, otp,fcmToken, Platform) => {
+    console.log("email, otp,fcmToken, Platform",email, otp,fcmToken, Platform);
+    
     try {
       dispatch({type: 'SET_LOADING', payload: true});
-      const response = await authService.verifyOtp(email, otp);
+      const response = await authService.verifyOtp(email, otp,fcmToken, Platform);
       
       if (response.success) {
         // Save auth token
