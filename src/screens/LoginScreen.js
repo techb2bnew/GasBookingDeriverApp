@@ -718,7 +718,7 @@ const styles = StyleSheet.create({
   },
   supportFooter: {
     position: 'absolute',
-    bottom: 50,
+    bottom: 30,
     left: 0,
     right: 0,
     alignItems: 'center',

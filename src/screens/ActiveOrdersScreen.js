@@ -33,11 +33,11 @@ const ActiveOrdersScreen = ({ navigation }) => {
       setLoading(true);
 
       // If agent is offline, don't fetch orders
-      if (deliveryAgent?.status !== 'online') {
-        console.log('Agent is offline, not fetching active orders');
-        setActiveOrders([]);
-        return;
-      }
+      // if (deliveryAgent?.status !== 'online') {
+      //   console.log('Agent is offline, not fetching active orders');
+      //   setActiveOrders([]);
+      //   return;
+      // }
 
       // Get token from AsyncStorage
       const token = await AsyncStorage.getItem('authToken');
@@ -123,23 +123,15 @@ const ActiveOrdersScreen = ({ navigation }) => {
         <Text style={styles.headerTitle}>Active Orders</Text>
         <TouchableOpacity
           onPress={onRefresh}
-          disabled={deliveryAgent?.status !== 'online' || loading}
-          style={{ opacity: deliveryAgent?.status === 'online' ? 1 : 0.5 }}
+          // disabled={deliveryAgent?.status !== 'online' || loading}
+          style={{ opacity:  0.5 }}
         >
           <Icon name="refresh" size={24} color="#ffffff" />
         </TouchableOpacity>
       </View>
 
       <View style={styles.content}>
-        {deliveryAgent?.status !== 'online' ? (
-          <View style={styles.offlineState}>
-            <Icon name="wifi-off" size={64} color="#717182" />
-            <Text style={styles.offlineTitle}>You are offline</Text>
-            <Text style={styles.offlineSubtitle}>
-              Go online to see active orders
-            </Text>
-          </View>
-        ) : activeOrders.length === 0 ? (
+        { activeOrders.length === 0 ? (
           <View style={styles.emptyState}>
             <Icon name="inbox" size={64} color="#717182" />
             <Text style={styles.emptyStateTitle}>No active orders</Text>

@@ -25,6 +25,8 @@ import LoginScreen from './src/screens/LoginScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
 import OrderDetailScreen from './src/screens/OrderDetailScreen';
 import DeliveryScreen from './src/screens/DeliveryScreen';
+import NotificationScreen from './src/screens/NotificationScreen';
+
 import ProfileScreen from './src/screens/ProfileScreen';
 import OrderHistoryScreen from './src/screens/OrderHistoryScreen';
 import EditProfileScreen from './src/screens/EditProfileScreen';
@@ -67,6 +69,8 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
           iconName = 'dashboard';
         } else if (route.name === 'Profile') {
           iconName = 'person';
+        } else if (route.name === 'Notification') {
+          iconName = 'notifications';
         } else if (route.name === 'History') {
           iconName = 'history';
         }
@@ -132,7 +136,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.md,
     borderRadius: borderRadius.xl,
-    minWidth: 85,
+    minWidth: 100,
     position: 'relative',
   },
   tabContentActive: {
@@ -162,6 +166,7 @@ const TabNavigator = () => {
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
       <Tab.Screen name="History" component={OrderHistoryScreen} />
+      <Tab.Screen name="Notification" component={NotificationScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );

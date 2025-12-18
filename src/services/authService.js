@@ -22,12 +22,14 @@ export const authService = {
     }
   },
 
-  verifyOtp: async (email, otp) => {
+  verifyOtp: async (email, otp,fcmToken, Platform) => {
+    console.log("fcmToken, Platform>>",fcmToken, Platform);
+    
     try {
       const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api${API_ENDPOINTS.AUTH}/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, otp, role: 'agent' }),
+        body: JSON.stringify({ email, otp, role: 'agent',fcmToken:fcmToken, fcmDeviceType:Platform }),
       });
 
       const data = await response.json().catch(() => ({}));
