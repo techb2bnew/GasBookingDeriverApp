@@ -123,8 +123,8 @@ export const SUCCESS_MESSAGES = {
 };
 
 export const API_ENDPOINTS = {
-  BASE_URL: 'https://febd7108d00c.ngrok-free.app',
-  SOCKET_URL: 'https://febd7108d00c.ngrok-free.app',
+  BASE_URL: 'https://3cf3ef7cd54a.ngrok-free.app',
+  SOCKET_URL: 'https://3cf3ef7cd54a.ngrok-free.app',
   ORDERS: '/orders',
   PROFILE: '/profile',
   AUTH: '/auth',

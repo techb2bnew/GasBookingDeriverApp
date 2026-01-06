@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,61 +8,60 @@ import {
   SafeAreaView,
   ActivityIndicator,
 } from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_ENDPOINTS } from '../utils/constants';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { borderRadius, spacing } from '../utils/dimensions';
 
- const COLORS = {
+const COLORS = {
   // Red Theme Colors
-  primary: '#DC143C',      // Crimson Red - Main primary color
-  secondary: '#C41E3A',    // Dark Red - Secondary color
-  accent: '#E53E3E',       // Bright Red - Accent color
-  
+  primary: '#DC143C', // Crimson Red - Main primary color
+  secondary: '#C41E3A', // Dark Red - Secondary color
+  accent: '#E53E3E', // Bright Red - Accent color
+
   // Background Colors
-  background: '#F8FAFC',   // Light Gray Blue
-  surface: '#FFFFFF',       // Pure White
+  background: '#F8FAFC', // Light Gray Blue
+  surface: '#FFFFFF', // Pure White
   cardBackground: '#FFFFFF', // Card Background
-  
+
   // Text Colors
-  text: '#1E293B',         // Dark Slate
+  text: '#1E293B', // Dark Slate
   textSecondary: '#64748B', // Medium Slate
-  textLight: '#94A3B8',    // Light Slate
-  
+  textLight: '#94A3B8', // Light Slate
+
   // Status Colors
-  success: '#10B981',      // Emerald
-  warning: '#F59E0B',      // Amber
-  error: '#DC143C',        // Red - Matching theme
-  info: '#DC143C',         // Red - Matching theme
-  
+  success: '#10B981', // Emerald
+  warning: '#F59E0B', // Amber
+  error: '#DC143C', // Red - Matching theme
+  info: '#DC143C', // Red - Matching theme
+
   // UI Colors
-  border: '#E2E8F0',       // Light Border
-  shadow: '#000000',       // Shadow
-  white: '#FFFFFF',        // White
-  black: '#000000',        // Black
-  gray: '#9CA3AF',         // Gray
-  lightGray: '#F1F5F9',    // Light Gray
-  darkGray: '#475569',     // Dark Gray
-  
+  border: '#E2E8F0', // Light Border
+  shadow: '#000000', // Shadow
+  white: '#FFFFFF', // White
+  black: '#000000', // Black
+  gray: '#9CA3AF', // Gray
+  lightGray: '#F1F5F9', // Light Gray
+  darkGray: '#475569', // Dark Gray
+
   // Gradient Colors
   gradientStart: '#DC143C', // Crimson Red Start
-  gradientEnd: '#C41E3A',   // Dark Red End
-  
+  gradientEnd: '#C41E3A', // Dark Red End
+
   // Special Colors
   transparent: 'transparent',
   overlay: 'rgba(0, 0, 0, 0.6)',
-  highlight: '#FFE5E5',     // Light Red highlight
-  subtle: '#F8FAFC',  
-  
+  highlight: '#FFE5E5', // Light Red highlight
+  subtle: '#F8FAFC',
+
   // Very Light Blue
-  blue:"#008ED8"
+  blue: '#008ED8',
 };
 
-
 const BASE_URL = 'YOUR_BASE_URL_HERE'; // 🔴 change this
-const NotificationItem = ({item, onPress}) => {
+const NotificationItem = ({ item, onPress }) => {
   return (
     <TouchableOpacity style={styles.card} activeOpacity={0.8} onPress={onPress}>
       <View style={styles.iconWrap}>
@@ -86,10 +85,8 @@ const NotificationItem = ({item, onPress}) => {
   );
 };
 
-const NotificationScreen = ({navigation}) => {
+const NotificationScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
-
-  // 🔴 ya redux / asyncStorage se le lo
 
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -107,19 +104,22 @@ const NotificationScreen = ({navigation}) => {
   // GET /api/notifications
   // =========================
   const fetchNotifications = async () => {
- const token = await AsyncStorage.getItem('authToken');
+    const token = await AsyncStorage.getItem('authToken');
 
-    console.log("ttookeken",token);
-    
+    console.log('ttookeken', token);
+
     try {
       setLoading(true);
- const token = await AsyncStorage.getItem('authToken');
-      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/notifications`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const token = await AsyncStorage.getItem('authToken');
+      const response = await fetch(
+        `${API_ENDPOINTS.BASE_URL}/api/notifications`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
 
       const data = await response.json();
 
@@ -138,7 +138,7 @@ const NotificationScreen = ({navigation}) => {
   // =========================
   const fetchUnreadCount = async () => {
     try {
-       const token = await AsyncStorage.getItem('authToken');
+      const token = await AsyncStorage.getItem('authToken');
       const response = await fetch(
         `${API_ENDPOINTS.BASE_URL}/api/notifications/unread-count`,
         {
@@ -164,7 +164,7 @@ const NotificationScreen = ({navigation}) => {
   // =========================
   const markAsRead = async notification => {
     try {
-       const token = await AsyncStorage.getItem('authToken');
+      const token = await AsyncStorage.getItem('authToken');
       await fetch(
         `${API_ENDPOINTS.BASE_URL}/api/notifications/${notification.id}/read`,
         {
@@ -176,9 +176,7 @@ const NotificationScreen = ({navigation}) => {
       );
 
       setNotifications(prev =>
-        prev.map(n =>
-          n.id === notification.id ? {...n, isRead: true} : n,
-        ),
+        prev.map(n => (n.id === notification.id ? { ...n, isRead: true } : n)),
       );
 
       setUnreadCount(prev => Math.max(prev - 1, 0));
@@ -193,7 +191,7 @@ const NotificationScreen = ({navigation}) => {
   // =========================
   const markAllAsRead = async () => {
     try {
-       const token = await AsyncStorage.getItem('authToken');
+      const token = await AsyncStorage.getItem('authToken');
       await fetch(`${API_ENDPOINTS.BASE_URL}/api/notifications/read-all`, {
         method: 'PUT',
         headers: {
@@ -201,15 +199,29 @@ const NotificationScreen = ({navigation}) => {
         },
       });
 
-      setNotifications(prev => prev.map(n => ({...n, isRead: true})));
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
       setUnreadCount(0);
     } catch (error) {
       console.log('markAllAsRead error', error);
     }
   };
-
+  const EmptyNotification = () => {
+    return (
+      <View style={styles.emptyContainer}>
+        <Ionicons
+          name="notifications-off-outline"
+          size={64}
+          color={COLORS.gray}
+        />
+        <Text style={styles.emptyTitle}>Notification not found</Text>
+        <Text style={styles.emptySubText}>
+          You don’t have any notifications right now
+        </Text>
+      </View>
+    );
+  };
   return (
-    <SafeAreaView style={[styles.container, {paddingTop: 2}]}>
+    <SafeAreaView style={[styles.container, { paddingTop: 2 }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={COLORS.white} />
@@ -219,10 +231,10 @@ const NotificationScreen = ({navigation}) => {
           Notifications {unreadCount > 0 ? `(${unreadCount})` : ''}
         </Text>
 
-        <TouchableOpacity
-          onPress={markAllAsRead}
-          disabled={unreadCount === 0}>
-          <Text style={[styles.clearText, unreadCount === 0 && {opacity: 0.5}]}>
+        <TouchableOpacity onPress={markAllAsRead} disabled={unreadCount === 0}>
+          <Text
+            style={[styles.clearText, unreadCount === 0 && { opacity: 0.5 }]}
+          >
             Read All
           </Text>
         </TouchableOpacity>
@@ -231,7 +243,7 @@ const NotificationScreen = ({navigation}) => {
       {/* List */}
       {loading ? (
         <ActivityIndicator
-          style={{marginTop: 40}}
+          style={{ marginTop: 40 }}
           size="large"
           color={COLORS.primary}
         />
@@ -239,11 +251,12 @@ const NotificationScreen = ({navigation}) => {
         <FlatList
           data={notifications}
           keyExtractor={item => item.id.toString()}
-          renderItem={({item}) => (
+          renderItem={({ item }) => (
             <NotificationItem item={item} onPress={() => markAsRead(item)} />
           )}
-          contentContainerStyle={{paddingBottom: 20}}
+          contentContainerStyle={{ paddingBottom: 20 }}
           showsVerticalScrollIndicator={false}
+          ListEmptyComponent={!loading ? <EmptyNotification /> : null}
         />
       )}
     </SafeAreaView>
@@ -258,16 +271,16 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   header: {
-      paddingHorizontal: spacing.xl,
-      paddingTop: spacing.md,
-      paddingBottom: spacing.xl,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      backgroundColor: COLORS.primary,
-      borderBottomLeftRadius: borderRadius.xl,
-      borderBottomRightRadius: borderRadius.xl,
-    },
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.primary,
+    borderBottomLeftRadius: borderRadius.xl,
+    borderBottomRightRadius: borderRadius.xl,
+  },
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
@@ -297,7 +310,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 12,
   },
-  content: {flex: 1},
+  content: { flex: 1 },
   title: {
     fontSize: 15,
     fontWeight: '600',
@@ -320,5 +333,24 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.blue,
     marginLeft: 6,
     marginTop: 6,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical:300,
+    paddingHorizontal: 20,
+  },
+  emptyTitle: {
+    marginTop: 12,
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.blue,
+  },
+  emptySubText: {
+    marginTop: 6,
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
   },
 });
