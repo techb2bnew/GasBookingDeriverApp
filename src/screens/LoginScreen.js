@@ -254,7 +254,8 @@ useEffect(() => {
                 style={styles.logoImage}
               />
             </View>
-            <Text style={styles.title}>Leadway Rider</Text>
+            {/* <Text style={styles.title}>LEADWAY GAS</Text> */}
+            {/* <Text style={styles.title}>Rider</Text> */}
             <Text style={styles.subtitle}>Sign in to start delivering</Text>
           </View>
 
@@ -464,36 +465,24 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    height: hp(45),
+    height: hp(38),
     alignItems: 'center',
     justifyContent: 'center',
   },
-  logoContainer: {
-    width: wp('30%'),
-    height: wp('30%'),
-    // borderRadius: wp('15%'),
-    // backgroundColor: '#fff',
+logoContainer: {
+    // backgroundColor: 'white', // 👈 yahin white background
+    // borderRadius: 50, // optional
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.xl,
-    // shadowColor: '#035db7',
-    // shadowOffset: {
-    //   width: 0,
-    //   height: 8,
-    // },
-    // shadowOpacity: 0.3,
-    // shadowRadius: 16,
-    // elevation: 8,
   },
   logoImage: {
-    width: 80,
-    height: 80,
+    width: 150,
+    height: 130,
   },
   title: {
     fontSize: fontSize.xxl,
     fontWeight: '700',
-    color: COLORS.blue, // Dark text
-    marginTop: spacing.lg,
+    color: '#035DB7', // Dark text
     textAlign: 'center',
     letterSpacing: -0.5,
   },

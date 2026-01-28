@@ -123,8 +123,8 @@ export const SUCCESS_MESSAGES = {
 };
 
 export const API_ENDPOINTS = {
-  BASE_URL: 'https://3cf3ef7cd54a.ngrok-free.app',
-  SOCKET_URL: 'https://3cf3ef7cd54a.ngrok-free.app',
+  BASE_URL: 'https://846c6c4ffd4e.ngrok-free.app',
+  SOCKET_URL: 'https://846c6c4ffd4e.ngrok-free.app',
   ORDERS: '/orders',
   PROFILE: '/profile',
   AUTH: '/auth',
@@ -181,6 +181,6 @@ export const ORDER_STATUS_FLOW = [
 ];
 
 export const COLORS = {
-  primary: '#DC143C',
-  blue: '#008ED8',
+  primary: '#E0202D',
+  blue: '#027FFF',
 };

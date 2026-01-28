@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
+import { COLORS } from '../utils/constants';
 
 const { width, height } = Dimensions.get('window');
 
@@ -71,14 +72,14 @@ const SplashScreen = ({ onFinish }) => {
         {/* Logo Container */}
         <View style={styles.logoContainer}>
           <View style={styles.logoBackground}>
-          <View style={{ alignItems: 'center'}}>
+          {/* <View style={{ alignItems: 'center'}}> */}
             <Image source={require('../assets/leadIcon.png')} style={styles.logoImage} />
-          </View>
+          {/* </View> */}
           </View>
         </View>
 
         {/* App Name */}
-        <Text style={styles.appName}>Leadway Rider</Text>
+        {/* <Text style={styles.appName}>LEADWAY GAS</Text> */}
         
         {/* Tagline */}
         <Text style={styles.tagline}>Fast & Reliable Gas Delivery</Text>
@@ -94,7 +95,7 @@ const SplashScreen = ({ onFinish }) => {
 
         {/* Company Info */}
         <View style={styles.companyInfo}>
-          <Text style={styles.companyText}>Powered by Leadway</Text>
+          <Text style={styles.companyText}>Powered by Leadway Gas</Text>
           <Text style={styles.versionText}>Version 1.0.0</Text>
         </View>
       </Animated.View>
@@ -105,7 +106,7 @@ const SplashScreen = ({ onFinish }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#035db7', // Dark slate background
+    backgroundColor: 'white', // Dark slate background
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -116,32 +117,23 @@ const styles = StyleSheet.create({
   logoContainer: {
     marginBottom: spacing.xxl,
   },
-  logoBackground: {
-    width: wp('30%'),
-    height: wp('30%'),
-    borderRadius: wp('15%'),
-    backgroundColor: '#fff', // Blue
+  logoContainer: {
+    // backgroundColor: 'white', // 👈 yahin white background
+    // borderRadius: 50, // optional
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
   },
   appName: {
     fontSize: fontSize.xxl,
     fontWeight: '700',
+    padding:2,
     color: '#ffffff',
     marginBottom: spacing.sm,
     textAlign: 'center',
   },
   tagline: {
     fontSize: fontSize.md,
-    color: '#94a3b8', // Light slate
+    color: COLORS.blue, // Light slate
     marginBottom: spacing.xxl,
     textAlign: 'center',
   },
@@ -156,7 +148,7 @@ const styles = StyleSheet.create({
     width: wp('2%'),
     height: wp('2%'),
     borderRadius: wp('1%'),
-    backgroundColor: '#035db7', // Blue
+    backgroundColor: COLORS.blue, // Blue
     marginHorizontal: spacing.xs,
   },
   dot1: {
@@ -166,8 +158,8 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   logoImage: {
-    width: 80,
-    height: 80,
+    width: 170,
+    height: 150,
   },
   dot3: {
     opacity: 1,
@@ -177,12 +169,12 @@ const styles = StyleSheet.create({
   },
   companyText: {
     fontSize: fontSize.sm,
-    color: '#fff', // Slate gray
+    color: COLORS.blue, // Slate gray
     marginBottom: spacing.xs,
   },
   versionText: {
     fontSize: fontSize.xs,
-    color: '#fff', // Slate gray
+    color: COLORS.blue, // Slate gray
   },
 });
 
