@@ -166,7 +166,7 @@ const OrderHistoryScreen = ({ navigation }) => {
         </View>
         <View style={styles.detailRow}>
           <Icon name="attach-money" size={16} color="#717182" />
-          <Text style={styles.detailText}>${order?.totalAmount}</Text>
+          <Text style={styles.detailText}>KSH{order?.totalAmount}</Text>
         </View>
       </View>
     </View>

@@ -369,7 +369,7 @@ const DeliveryScreen = ({ navigation }) => {
                 </View>
                 <View style={styles.summaryRow}>
                   <Text style={styles.label}>Total Amount:</Text>
-                  <Text style={styles.value}>${currentOrder?.totalAmount}</Text>
+                  <Text style={styles.value}>KSH{currentOrder?.totalAmount}</Text>
                 </View>
                 <View style={styles.summaryRow}>
                   <Text style={styles.label}>Delivery Address:</Text>

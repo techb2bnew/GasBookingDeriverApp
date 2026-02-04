@@ -363,7 +363,7 @@ const OrderDetailScreen = ({ navigation }) => {
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.label}>Total Amount:</Text>
-            <Text style={styles.value}>${currentOrder?.totalAmount}</Text>
+            <Text style={styles.value}>KSH{currentOrder?.totalAmount}</Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.label}>Status:</Text>
@@ -389,13 +389,13 @@ const OrderDetailScreen = ({ navigation }) => {
                   <Text style={styles.itemName}>
                     {capitalizeFirstLetter(item?.productName)}
                   </Text>
-                  <Text style={styles.itemTotal}>${item?.total}</Text>
+                  <Text style={styles.itemTotal}>KSH{item?.total}</Text>
                 </View>
                 <View style={styles.itemDetails}>
                   <Text style={styles.itemVariant}>{item?.variantLabel}</Text>
                   <Text style={styles.itemQuantity}>Qty: {item?.quantity}</Text>
                   <Text style={styles.itemPrice}>
-                    ${item?.variantPrice} each
+                    KSH{item?.variantPrice} each
                   </Text>
                 </View>
               </View>
