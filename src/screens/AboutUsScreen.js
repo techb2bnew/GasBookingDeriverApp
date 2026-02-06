@@ -6,9 +6,12 @@ import {
   TouchableOpacity,
   ScrollView,
   Linking,
+  Alert,
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { fontSize, spacing, borderRadius,wp,hp } from '../utils/dimensions';
+import { fontSize, spacing, borderRadius, wp, hp } from '../utils/dimensions';
+import { COLORS } from '../utils/constants';
 
 const AboutUsScreen = ({navigation}) => {
   const appVersion = '1.0.0';
@@ -26,14 +29,21 @@ const AboutUsScreen = ({navigation}) => {
  
 
   const handlePhoneCall = () => {
-    Linking.openURL('tel:+1234567890').catch(() => {
-      // Handle error if phone call cannot be initiated
+    const phoneNumber = '+1234567890';
+    const telUrl = Platform.OS === 'ios' 
+      ? `telprompt:${phoneNumber}` 
+      : `tel:${phoneNumber}`;
+    Linking.openURL(telUrl).catch(() => {
+      // Fallback to regular tel:
+      Linking.openURL(`tel:${phoneNumber}`).catch(() => {
+        Alert.alert('Contact Us', `Unable to make call. Please dial: ${phoneNumber}`);
+      });
     });
   };
 
   const StatCard = ({title, value, icon}) => (
     <View style={styles.statCard}>
-      <Icon name={icon} size={24} color="#030213" />
+      <Icon name={icon} size={20} color={COLORS.blue} />
       <Text style={styles.statValue}>{value}</Text>
       <Text style={styles.statTitle}>{title}</Text>
     </View>
@@ -42,7 +52,7 @@ const AboutUsScreen = ({navigation}) => {
 
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Icon name="arrow-back" size={24} color="#ffffff" />
@@ -51,7 +61,11 @@ const AboutUsScreen = ({navigation}) => {
         <View style={styles.placeholder} />
       </View>
 
-      <View style={styles.content}>
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: spacing.xl }}
+      >
         <View style={styles.section}>
           <View style={styles.logoContainer}>
             <View style={styles.logo}>
@@ -96,9 +110,9 @@ const AboutUsScreen = ({navigation}) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Contact Us</Text>
           <TouchableOpacity style={styles.phoneContainer} onPress={handlePhoneCall}>
-            <Icon name="phone" size={24} color="#030213" />
+            <Icon name="phone" size={20} color={COLORS.blue} />
             <Text style={styles.phoneText}>+1 (234) 567-8900</Text>
-            <Icon name="call" size={20} color="#030213" />
+            <Icon name="chevron-right" size={20} color="#9ca3af" />
           </TouchableOpacity>
         </View>
 
@@ -134,8 +148,8 @@ const AboutUsScreen = ({navigation}) => {
             © 2024 {companyInfo.name}. All rights reserved.
           </Text>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 };
 
@@ -149,9 +163,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
+    paddingTop: 60,
     paddingBottom: spacing.xl,
-    backgroundColor: "#035db7",
+    minHeight: hp(18),
+    backgroundColor: COLORS.primary,
     borderBottomLeftRadius: borderRadius.xl,
     borderBottomRightRadius: borderRadius.xl,
   },
@@ -159,9 +174,11 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
   },
   headerTitle: {
+    flex: 1,
     fontSize: fontSize.lg,
     fontWeight: '600',
     color: '#ffffff', // White text
+    textAlign: 'center',
   },
   placeholder: {
     width: wp('10%'),
@@ -170,42 +187,48 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
   },
   section: {
-    marginTop: spacing.xl,
+    marginTop: spacing.lg,
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.md,
+    paddingVertical: spacing.md,
   },
   logo: {
-    width: wp('20%'),
-    height: wp('20%'),
-    borderRadius: wp('10%'),
-    backgroundColor: '#035db7', // Blue
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   appName: {
-    fontSize: fontSize.xl,
-    fontWeight: '600',
-    color: '#030213',
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+    color: '#1f2937',
     marginBottom: spacing.xs,
   },
   version: {
-    fontSize: fontSize.sm,
-    color: '#717182',
+    fontSize: fontSize.xs,
+    color: '#6b7280',
   },
   sectionTitle: {
-    fontSize: fontSize.lg,
+    fontSize: fontSize.md,
     fontWeight: '600',
-    color: '#1f2937', // Dark text
-    marginBottom: spacing.lg,
+    color: '#1f2937',
+    marginBottom: spacing.sm,
   },
   description: {
-    fontSize: fontSize.md,
-    lineHeight: 24,
-    color: '#6b7280', // Gray text
-    marginBottom: spacing.lg,
+    fontSize: fontSize.sm,
+    lineHeight: 20,
+    color: '#6b7280',
+    marginBottom: spacing.sm,
   },
   statsGrid: {
     flexDirection: 'row',
@@ -214,141 +237,88 @@ const styles = StyleSheet.create({
   },
   statCard: {
     width: '48%',
-    backgroundColor: '#f3f3f5',
-    padding: spacing.lg,
-    borderRadius: borderRadius.lg,
+    backgroundColor: '#ffffff',
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
     alignItems: 'center',
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#f3f4f6',
   },
   statValue: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
-    color: '#030213',
-    marginTop: spacing.sm,
+    fontSize: fontSize.md,
+    fontWeight: '700',
+    color: COLORS.primary,
+    marginTop: spacing.xs,
     marginBottom: spacing.xs,
   },
   statTitle: {
     fontSize: fontSize.xs,
-    color: '#717182',
+    color: '#6b7280',
     textAlign: 'center',
-  },
-  teamContainer: {
-    backgroundColor: '#f9f9f9',
-    borderRadius: borderRadius.lg,
-    overflow: 'hidden',
-  },
-  teamMember: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ebef',
-  },
-  memberAvatar: {
-    width: wp('12%'),
-    height: wp('12%'),
-    borderRadius: wp('6%'),
-    backgroundColor: '#030213',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.md,
-  },
-  memberInfo: {
-    flex: 1,
-  },
-  memberName: {
-    fontSize: 16,
     fontWeight: '500',
-    color: '#030213',
-    marginBottom: 2,
-  },
-  memberRole: {
-    fontSize: 14,
-    color: '#717182',
-    marginBottom: 2,
-  },
-  memberEmail: {
-    fontSize: 12,
-    color: '#717182',
   },
   phoneContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f3f3f5',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 12,
+    backgroundColor: '#ffffff',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.md,
     justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#f3f4f6',
   },
   phoneText: {
-    fontSize: 18,
+    fontSize: fontSize.md,
     fontWeight: '600',
-    color: '#030213',
+    color: '#1f2937',
     flex: 1,
-    marginLeft: 12,
+    marginLeft: spacing.sm,
   },
   legalContainer: {
-    backgroundColor: '#f9f9f9',
-    borderRadius: 12,
+    backgroundColor: '#ffffff',
+    borderRadius: borderRadius.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
     overflow: 'hidden',
   },
   legalItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#e9ebef',
+    borderBottomColor: '#f3f4f6',
   },
   legalText: {
-    fontSize: 16,
-    color: '#030213',
+    fontSize: fontSize.sm,
+    color: '#1f2937',
+    fontWeight: '500',
   },
   footer: {
     alignItems: 'center',
-    paddingVertical: 32,
+    paddingVertical: spacing.lg,
+    marginTop: spacing.md,
   },
   footerText: {
-    fontSize: 14,
-    color: '#717182',
+    fontSize: fontSize.xs,
+    color: '#9ca3af',
     textAlign: 'center',
-  },
-  card: {
-    backgroundColor: '#ffffff', // White background
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: '#1f2937', // Dark shadow
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1f2937', // Dark text
-    marginBottom: 8,
-  },
-  cardText: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: '#6b7280', // Gray text
-  },
-  contactInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  contactText: {
-    fontSize: 14,
-    color: '#6b7280', // Gray text
-    marginLeft: 12,
   },
 });
 

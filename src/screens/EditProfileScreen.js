@@ -191,16 +191,14 @@ const EditProfileScreen = ({ navigation }) => {
       newErrors.vehicleNumber = 'Vehicle number must be at least 5 characters';
     }
 
-    // PAN validation
+    // PAN validation (simple length check so user is not blocked)
     if (!formData.panCardNumber.trim()) {
       newErrors.panCardNumber = 'PAN number is required';
-    } else if (
-      !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.panCardNumber.toUpperCase())
-    ) {
-      newErrors.panCardNumber = 'Please enter a valid PAN number';
+    } else if (formData.panCardNumber.trim().length < 5) {
+      newErrors.panCardNumber = 'PAN number must be at least 5 characters';
     }
 
-    // Aadhar validation
+    // Aadhar validation (only enforce 12 digits, ignore spaces)
     if (!formData.aadharCardNumber.trim()) {
       newErrors.aadharCardNumber = 'Aadhar number is required';
     } else if (
@@ -253,12 +251,12 @@ const EditProfileScreen = ({ navigation }) => {
         {label} {required && <Text style={styles.required}>*</Text>}
       </Text>
       <TextInput
-        // style={[
-        //   styles.textInput,
-        //   errors[field] && styles.textInputError,
-        //   !editable && styles.textInputDisabled,
-        //   multiline && styles.textInputMultiline
-        // ]}
+        style={[
+          styles.textInput,
+          errors[field] && styles.textInputError,
+          !editable && styles.textInputDisabled,
+          multiline && styles.textInputMultiline,
+        ]}
         value={formData[field]}
         onChangeText={value => handleInputChange(field, value)}
         placeholder={placeholder}
@@ -266,9 +264,9 @@ const EditProfileScreen = ({ navigation }) => {
         placeholderTextColor="#717182"
         autoCapitalize={autoCapitalize}
         autoCorrect={false}
-        returnKeyType={multiline ? 'default' : 'next'}
+        // returnKeyType="done"
         clearButtonMode="while-editing"
-        blurOnSubmit={!multiline}
+        blurOnSubmit={true}
         multiline={multiline}
         numberOfLines={multiline ? 4 : 1}
         textAlignVertical={multiline ? 'top' : 'center'}
@@ -281,7 +279,7 @@ const EditProfileScreen = ({ navigation }) => {
 
   const handleSave = async () => {
     if (!validateForm()) {
-      Alert.alert('Validation Error', 'Please fix the errors before saving');
+      Alert.alert('Validation Error', 'Please fill all the required fields');
       return;
     }
 
@@ -375,93 +373,97 @@ const EditProfileScreen = ({ navigation }) => {
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Personal Information</Text>
-
-        {renderInput(
-          'Full Name',
-          'name',
-          'Enter your full name',
-          'default',
-          true,
-          'words',
-        )}
-        {renderInput(
-          'Phone Number',
-          'phone',
-          'Enter your phone number',
-          'phone-pad',
-          true,
-          'none',
-          15,
-          false,
-        )}
-        {renderInput(
-          'Address',
-          'address',
-          'Enter your address',
-          'default',
-          false,
-          'words',
-        )}
+        <View style={styles.sectionCard}>
+          {renderInput(
+            'Full Name',
+            'name',
+            'Enter your full name',
+            'default',
+            true,
+            'words',
+          )}
+          {renderInput(
+            'Phone Number',
+            'phone',
+            'Enter your phone number',
+            'phone-pad',
+            true,
+            'none',
+            15,
+            false,
+          )}
+          {renderInput(
+            'Address',
+            'address',
+            'Enter your address',
+            'default',
+            false,
+            'words',
+          )}
+        </View>
       </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Vehicle Information</Text>
-
-        {renderInput(
-          'Vehicle Number',
-          'vehicleNumber',
-          'Enter vehicle registration number',
-          'default',
-          true,
-          'characters',
-        )}
+        <View style={styles.sectionCard}>
+          {renderInput(
+            'Vehicle Number',
+            'vehicleNumber',
+            'Enter vehicle registration number',
+            'default',
+            true,
+            'characters',
+          )}
+        </View>
       </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Document Information</Text>
-
-        {renderInput(
-          'PAN Number',
-          'panCardNumber',
-          'Enter your PAN number',
-          'default',
-          true,
-          'characters',
-          10,
-        )}
-        {renderInput(
-          'Aadhar Number',
-          'aadharCardNumber',
-          'Enter your Aadhar number',
-          'numeric',
-          true,
-          'none',
-          12,
-        )}
-        {renderInput(
-          'Driving License',
-          'drivingLicence',
-          'Enter your driving license number',
-          'default',
-          true,
-          'characters',
-        )}
+        <View style={styles.sectionCard}>
+          {renderInput(
+            'PAN Number',
+            'panCardNumber',
+            'Enter your PAN number',
+            'default',
+            true,
+            'characters',
+            10,
+          )}
+          {renderInput(
+            'Aadhar Number',
+            'aadharCardNumber',
+            'Enter your Aadhar number',
+            'numeric',
+            true,
+            'none',
+            12,
+          )}
+          {renderInput(
+            'Driving License',
+            'drivingLicence',
+            'Enter your driving license number',
+            'default',
+            true,
+            'characters',
+          )}
+        </View>
       </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Bank Details</Text>
-
-        {renderInput(
-          'Bank Details',
-          'bankDetails',
-          'Enter bank name, account number, IFSC code',
-          'default',
-          false,
-          'words',
-          null,
-          true,
-          true,
-        )}
+        <View style={styles.sectionCard}>
+          {renderInput(
+            'Bank Details',
+            'bankDetails',
+            'Enter bank name, account number, IFSC code',
+            'default',
+            false,
+            'words',
+            null,
+            true,
+            true,
+          )}
+        </View>
       </View>
     </>
   );
@@ -535,8 +537,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
+    paddingTop: 60,
     paddingBottom: spacing.xl,
+    minHeight: hp(14),
     backgroundColor: COLORS.primary,
     borderBottomLeftRadius: borderRadius.xl,
     borderBottomRightRadius: borderRadius.xl,
@@ -561,15 +564,26 @@ const styles = StyleSheet.create({
   },
   saveButtonTextDisabled: { color: '#b8b8b8' },
   content: { flex: 1, paddingHorizontal: spacing.xl },
-  scrollContent: { paddingBottom: 40 },
-  section: { marginTop: spacing.xl },
+  scrollContent: { paddingBottom: spacing.lg },
+  section: { marginTop: spacing.lg },
   sectionTitle: {
     fontSize: fontSize.md,
     fontWeight: '600',
     color:COLORS.blue,
     marginBottom: spacing.lg,
   },
-  inputContainer: { marginBottom: 20 },
+  sectionCard: {
+    backgroundColor: '#f9fafb',
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  inputContainer: { marginBottom: spacing.md },
   inputLabel: {
     fontSize: fontSize.sm,
     fontWeight: '500',
@@ -578,14 +592,14 @@ const styles = StyleSheet.create({
   },
   required: { color: '#ef4444' }, // Red
   textInput: {
-    borderWidth: 1,
-    borderColor: '#f3f4f6', // Light background border
+    borderWidth: 1.2,
+    borderColor: '#d1d5db', // Gray border
     borderRadius: spacing.sm,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     fontSize: fontSize.md,
     color: '#1f2937', // Dark text
-    backgroundColor: '#ffffff', // White background
+    backgroundColor: '#ffffff', // White input on light card
   },
   textInputError: {
     borderColor: '#ef4444', // Red

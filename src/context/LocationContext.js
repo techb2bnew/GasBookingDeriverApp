@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, useRef } from 'react';
-import { PermissionsAndroid, Platform, Alert } from 'react-native';
+import { PermissionsAndroid, Platform, Alert, Linking } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import { locationService } from '../services/locationService';
 
@@ -47,15 +47,49 @@ export const LocationProvider = ({ children }) => {
           Alert.alert("Permission Denied", "Location permission is required.");
           return false;
         }
+        return true;
       } else {
-        // iOS: configure and trigger the system prompt. This API version takes no args.
+        // iOS: configure and trigger the system prompt
         Geolocation.setRNConfiguration({
           skipPermissionRequests: false,
           authorizationLevel: 'whenInUse',
         });
+        
+        // Request authorization
         Geolocation.requestAuthorization();
+        
+        // Check permission by trying to get current position with a short timeout
+        return new Promise((resolve) => {
+          Geolocation.getCurrentPosition(
+            () => {
+              // Permission granted - location retrieved successfully
+              resolve(true);
+            },
+            (error) => {
+              // Permission denied or location unavailable
+              if (error.code === 1) { // PERMISSION_DENIED
+                Alert.alert(
+                  "Location Permission Required",
+                  "Please enable location access in Settings to use this feature.",
+                  [
+                    { text: "Cancel", style: "cancel" },
+                    { 
+                      text: "Open Settings", 
+                      onPress: () => Linking.openURL('app-settings:')
+                    }
+                  ]
+                );
+                resolve(false);
+              } else {
+                // Other errors (timeout, unavailable) - still allow but warn
+                console.warn("Location permission check warning:", error);
+                resolve(true); // Allow to proceed, error will be handled later
+              }
+            },
+            { timeout: 3000, maximumAge: 0 }
+          );
+        });
       }
-      return true;
     } catch (e) {
       console.error("ensurePermission error:", e);
       return false;
@@ -117,9 +151,59 @@ export const LocationProvider = ({ children }) => {
         },
         (error) => {
           console.error("❌ Initial location access failed:", error);
-          // Roll back to Offline if initial location fails on iOS strict permission
-          if (Platform.OS === 'ios') {
+          
+          // Handle different error codes
+          if (error.code === 1) { // PERMISSION_DENIED
             dispatch({ type: "SET_TRACKING", payload: false });
+            Alert.alert(
+              "Location Permission Denied",
+              "Location access is required for tracking. Please enable it in Settings.",
+              [
+                { text: "Cancel", style: "cancel" },
+                { 
+                  text: "Open Settings", 
+                  onPress: () => {
+                    if (Platform.OS === 'ios') {
+                      Linking.openURL('app-settings:');
+                    } else {
+                      Linking.openSettings();
+                    }
+                  }
+                }
+              ]
+            );
+          } else if (error.code === 2) { // POSITION_UNAVAILABLE
+            console.warn("Location unavailable - GPS may be disabled or weak signal");
+            dispatch({ type: "SET_TRACKING", payload: false });
+            
+            const isSimulator = Platform.OS === 'ios' && __DEV__;
+            const message = isSimulator
+              ? "Location services are not available. Please configure a location in the iOS Simulator:\n\nFeatures → Location → Custom Location (or select a preset)"
+              : "Unable to get your location. Please check:\n\n• GPS is enabled\n• Location services are turned on\n• You're in an area with good GPS signal";
+            
+            Alert.alert(
+              "Location Unavailable",
+              message,
+              [
+                { text: "OK", style: "default" },
+                ...(Platform.OS === 'ios' && !isSimulator ? [{
+                  text: "Open Settings",
+                  onPress: () => Linking.openURL('app-settings:')
+                }] : [])
+              ]
+            );
+          } else if (error.code === 3) { // TIMEOUT
+            console.warn("Location request timed out");
+            dispatch({ type: "SET_TRACKING", payload: false });
+            Alert.alert(
+              "Location Timeout",
+              "Location request took too long. Please try again or check your GPS signal.",
+              [{ text: "OK" }]
+            );
+          } else {
+            // For other errors, roll back tracking
+            dispatch({ type: "SET_TRACKING", payload: false });
+            console.warn("Unknown location error:", error);
           }
         },
         { enableHighAccuracy: Platform.OS === 'ios', timeout: 15000, maximumAge: 5000 }
@@ -139,6 +223,36 @@ export const LocationProvider = ({ children }) => {
         },
         (error) => {
           console.error("❌ Watch position error:", error);
+          
+          // Handle different error codes
+          if (error.code === 1) { // PERMISSION_DENIED
+            console.error("Location permission denied");
+            stopLocationTracking();
+            Alert.alert(
+              "Location Permission Denied",
+              "Location access is required for tracking. Please enable it in Settings.",
+              [
+                { text: "Cancel", style: "cancel" },
+                { 
+                  text: "Open Settings", 
+                  onPress: () => {
+                    if (Platform.OS === 'ios') {
+                      Linking.openURL('app-settings:');
+                    } else {
+                      Linking.openSettings();
+                    }
+                  }
+                }
+              ]
+            );
+          } else if (error.code === 2) { // POSITION_UNAVAILABLE
+            console.warn("Location unavailable - GPS may be disabled or weak signal");
+            // Don't stop tracking immediately, just log the warning
+            // User might move to a better location
+          } else if (error.code === 3) { // TIMEOUT
+            console.warn("Location request timed out");
+            // Don't stop tracking immediately, just log the warning
+          }
         },
         {
           enableHighAccuracy: Platform.OS === 'ios',

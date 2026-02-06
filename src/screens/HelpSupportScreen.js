@@ -7,9 +7,11 @@ import {
   ScrollView,
   Alert,
   Linking,
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { fontSize, spacing, borderRadius, wp, hp } from '../utils/dimensions';
+import { COLORS } from '../utils/constants';
 
 const HelpSupportScreen = ({ navigation }) => {
   const [expandedFaq, setExpandedFaq] = useState(null);
@@ -72,21 +74,28 @@ const HelpSupportScreen = ({ navigation }) => {
   ];
 
   const handleCallSupport = () => {
-    Alert.alert(
-      'Call Support',
-      'Would you like to call our support team?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Call',
-          onPress: () => Linking.openURL('tel:+1234567890'),
-        },
-      ]
-    );
+    const phoneNumber = '+1234567890';
+    // Format phone number for tel: link
+    const telUrl = Platform.OS === 'ios' 
+      ? `telprompt:${phoneNumber}` 
+      : `tel:${phoneNumber}`;
+    
+    Linking.openURL(telUrl).catch(() => {
+      // Fallback to regular tel: if telprompt fails
+      Linking.openURL(`tel:${phoneNumber}`).catch(() => {
+        Alert.alert('Call Support', `Unable to make call. Please dial: ${phoneNumber}`);
+      });
+    });
   };
 
   const handleEmailSupport = () => {
-    Linking.openURL('mailto:support@driverapp.com?subject=Driver Support Request');
+    const email = 'support@driverapp.com';
+    const subject = 'Driver Support Request';
+    const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(subject)}`;
+    
+    Linking.openURL(mailtoUrl).catch(() => {
+      Alert.alert('Email Support', `Unable to open email. Please email us at: ${email}`);
+    });
   };
 
   // const handleLiveChat = () => {
@@ -123,7 +132,7 @@ const HelpSupportScreen = ({ navigation }) => {
   const ContactOption = ({ option }) => (
     <TouchableOpacity style={styles.contactOption} onPress={option.action}>
       <View style={styles.contactIcon}>
-        <Icon name={option.icon} size={24} color="#030213" />
+        <Icon name={option.icon} size={20} color={COLORS.blue} />
       </View>
       <View style={styles.contactText}>
         <Text style={styles.contactTitle}>{option.title}</Text>
@@ -136,7 +145,7 @@ const HelpSupportScreen = ({ navigation }) => {
   );
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Icon name="arrow-back" size={24} color="#ffffff" />
@@ -145,7 +154,11 @@ const HelpSupportScreen = ({ navigation }) => {
         <View style={styles.placeholder} />
       </View>
 
-      <View style={styles.content}>
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: spacing.xl }}
+      >
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Contact Support</Text>
           <View style={styles.contactContainer}>
@@ -174,14 +187,26 @@ const HelpSupportScreen = ({ navigation }) => {
             </Text>
             <TouchableOpacity
               style={styles.emergencyButton}
-              onPress={() => Linking.openURL('tel:+1234567890')}
+              onPress={() => {
+                const phoneNumber = '+1234567890';
+                const telUrl = Platform.OS === 'ios' 
+                  ? `telprompt:${phoneNumber}` 
+                  : `tel:${phoneNumber}`;
+                Linking.openURL(telUrl).catch(() => {
+                  // Fallback to regular tel:
+                  Linking.openURL(`tel:${phoneNumber}`).catch(() => {
+                    Alert.alert('Emergency Line', `Unable to make call. Please dial: ${phoneNumber}`);
+                  });
+                });
+              }}
             >
+              <Icon name="phone" size={18} color="#ffffff" style={{ marginRight: spacing.xs }} />
               <Text style={styles.emergencyButtonText}>Call Emergency Line</Text>
             </TouchableOpacity>
           </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 };
 
@@ -195,9 +220,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
+    paddingTop: 60,
     paddingBottom: spacing.xl,
-    backgroundColor: "#035db7",
+    minHeight: hp(18),
+    backgroundColor: COLORS.primary,
     borderBottomLeftRadius: borderRadius.xl,
     borderBottomRightRadius: borderRadius.xl,
   },
@@ -205,9 +231,11 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
   },
   headerTitle: {
+    flex: 1,
     fontSize: fontSize.lg,
     fontWeight: '600',
-    color: '#ffffff', // White text
+    color: '#ffffff',
+    textAlign: 'center',
   },
   placeholder: {
     width: wp('10%'),
@@ -216,154 +244,131 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
   },
   section: {
-    marginTop: spacing.xl,
+    marginTop: spacing.lg,
   },
   sectionTitle: {
-    fontSize: fontSize.lg,
+    fontSize: fontSize.md,
     fontWeight: '600',
-    color: '#1f2937', // Dark text
-    marginBottom: spacing.lg,
+    color: '#1f2937',
+    marginBottom: spacing.md,
   },
   contactContainer: {
-    backgroundColor: '#f9f9f9',
-    borderRadius: borderRadius.lg,
+    backgroundColor: '#ffffff',
+    borderRadius: borderRadius.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
     overflow: 'hidden',
   },
   contactOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#e9ebef',
+    borderBottomColor: '#f3f4f6',
   },
   contactIcon: {
-    width: wp('10%'),
-    height: wp('10%'),
-    borderRadius: wp('5%'),
-    backgroundColor: '#ffffff',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#f0f7ff',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,
   },
-  // contactText: {
-  //   flex: 1,
-  // },
+  contactText: {
+    flex: 1,
+  },
   contactTitle: {
     fontSize: fontSize.md,
-    fontWeight: '500',
-    color: '#030213',
-    // marginBottom: 2,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 2,
   },
   contactSubtitle: {
-    fontSize: fontSize.sm,
-    color: '#717182',
+    fontSize: fontSize.xs,
+    color: '#6b7280',
   },
   faqContainer: {
-    backgroundColor: '#f9f9f9',
-    borderRadius: borderRadius.lg,
+    backgroundColor: '#ffffff',
+    borderRadius: borderRadius.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
     overflow: 'hidden',
   },
   faqItem: {
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6', // Light background border
+    borderBottomColor: '#f3f4f6',
   },
   faqHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
   },
   faqQuestion: {
     flex: 1,
-    fontSize: fontSize.md,
-    fontWeight: '500',
-    color: '#1f2937', // Dark text
-    marginRight: spacing.md,
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginRight: spacing.sm,
+    lineHeight: 20,
   },
   faqAnswer: {
-    fontSize: fontSize.sm,
-    color: '#6b7280', // Gray text
-    lineHeight: 20,
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
+    fontSize: fontSize.xs,
+    color: '#6b7280',
+    lineHeight: 18,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
   },
   emergencyCard: {
     backgroundColor: '#fef2f2',
-    borderRadius: 12,
-    padding: 20,
+    borderRadius: borderRadius.md,
+    padding: spacing.lg,
     alignItems: 'center',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#fecaca',
+    shadowColor: '#ef4444',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   emergencyTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: fontSize.md,
+    fontWeight: '700',
     color: '#ef4444',
-    marginTop: 12,
-    marginBottom: 8,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
   },
   emergencyText: {
-    fontSize: 14,
+    fontSize: fontSize.xs,
     color: '#717182',
     textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 16,
+    lineHeight: 18,
+    marginBottom: spacing.md,
   },
   emergencyButton: {
     backgroundColor: '#ef4444',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.sm,
+    minWidth: 160,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   emergencyButtonText: {
     color: '#ffffff',
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '600',
-  },
-  contactCard: {
-    backgroundColor: '#ffffff', // White background
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: '#1f2937', // Dark shadow
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  contactTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1f2937', // Dark text
-    marginBottom: 12,
-  },
-  contactInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  contactText: {
-    fontSize: 14,
-    color: '#6b7280', // Gray text
-    marginLeft: 12,
-    width: "70%"
-  },
-  contactButton: {
-    backgroundColor: '#035db7', // Blue
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  contactButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff', // White text
   },
 });
 

@@ -16,7 +16,6 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import { useOrder } from '../context/OrderContext';
 import { useLocation } from '../context/LocationContext';
-import StatusButton from '../components/StatusButton';
 import MapViewDirections from 'react-native-maps-directions';
 import { fontSize, spacing, borderRadius, wp, hp } from '../utils/dimensions';
 import { COLORS } from '../utils/constants';
@@ -428,13 +427,14 @@ const OrderDetailScreen = ({ navigation }) => {
 
         <View style={styles.actionsSection}>
           {getStatusButtons().map((button, index) => (
-            <StatusButton
+            <TouchableOpacity
               key={index}
-              title={button.title}
-              icon={button.icon}
+              style={[styles.actionButton, { backgroundColor: button.color }]}
               onPress={button.onPress}
-              color={button.color}
-            />
+            >
+              <Icon name={button.icon} size={20} color="#ffffff" />
+              <Text style={styles.actionButtonText}>{button.title}</Text>
+            </TouchableOpacity>
           ))}
         </View>
       </ScrollView>
@@ -452,8 +452,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
+    paddingTop: 60,
     paddingBottom: spacing.xl,
+    minHeight: hp(14),
     backgroundColor: COLORS.primary,
     borderBottomLeftRadius: borderRadius.xl,
     borderBottomRightRadius: borderRadius.xl,
@@ -566,19 +567,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: COLORS.primary,
-    paddingVertical: 12,
-    borderRadius: 12,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+    width: '100%',
+    marginBottom: spacing.sm,
   },
   callButtonText: {
     marginLeft: spacing.sm,
     fontSize: fontSize.md,
     fontWeight: '600',
     color: '#ffffff',
-    padding:6
   },
   actionsSection: {
-    marginTop: spacing.xl,
+    marginTop: spacing.md,
     marginBottom: spacing.xxl,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.md,
+  },
+  actionButtonText: {
+    marginLeft: spacing.sm,
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    color: '#ffffff',
   },
   modalOverlay: {
     flex: 1,

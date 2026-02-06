@@ -60,9 +60,12 @@ const ProfileScreen = ({ navigation }) => {
       if (res.success) {
         setProfileUser(res.user);
         setDeliveryAgent(res.deliveryAgent);
-        // Update AuthContext with fresh user data
+        // Update AuthContext with fresh user and deliveryAgent data
         if (updateUser) {
-          await updateUser(res.user);
+          await updateUser({
+            user: res.user,
+            deliveryAgent: res.deliveryAgent,
+          });
         }
       }
     } finally {
@@ -133,8 +136,14 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <View style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Icon name="arrow-back" size={24} color="#ffffff" />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Profile</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity
@@ -149,265 +158,274 @@ const ProfileScreen = ({ navigation }) => {
         </View>
       </View>
 
-      <View style={styles.profileSection}>
-        {/* Profile Header with Enhanced Design */}
-        <View style={styles.profileHeader}>
-          <View style={styles.profileHeaderBackground} />
-          <View style={styles.avatarContainer}>
-            <View style={styles.avatarOuter}>
-              <View style={styles.avatar}>
-                {profileUser?.profileImage ? (
-                  <Image
-                    source={{ uri: profileUser.profileImage }}
-                    style={styles.avatarImage}
-                    resizeMode="cover"
-                  />
-                ) : profileUser?.name ? (
-                  <Text style={styles.avatarLetter}>
-                    {profileUser.name.charAt(0).toUpperCase()}
-                  </Text>
-                ) : (
-                  <Icon name="person" size={40} color="#ffffff" />
-                )}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: spacing.xxl }}
+      >
+        <View style={styles.profileSection}>
+          {/* Profile Header with Enhanced Design */}
+          <View style={styles.profileHeader}>
+            <View style={styles.profileHeaderBackground} />
+            <View style={styles.avatarContainer}>
+              <View style={styles.avatarOuter}>
+                <View style={styles.avatar}>
+                  {profileUser?.profileImage ? (
+                    <Image
+                      source={{ uri: profileUser.profileImage }}
+                      style={styles.avatarImage}
+                      resizeMode="cover"
+                    />
+                  ) : profileUser?.name ? (
+                    <Text style={styles.avatarLetter}>
+                      {profileUser.name.charAt(0).toUpperCase()}
+                    </Text>
+                  ) : (
+                    <Icon name="person" size={40} color="#ffffff" />
+                  )}
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.profileInfo}>
+              <Text style={styles.driverName}>
+                {profileUser?.name || 'Driver Name'}
+              </Text>
+              <Text style={styles.driverEmail}>{profileUser?.email}</Text>
+              <View style={styles.ratingContainer}>
+                <Icon name="star" size={16} color="#fbbf24" />
+                <Text style={styles.rating}>{stats.rating}</Text>
+                <Text style={styles.ratingText}>• Professional Driver</Text>
               </View>
             </View>
           </View>
 
-          <View style={styles.profileInfo}>
-            <Text style={styles.driverName}>
-              {profileUser?.name || 'Driver Name'}
-            </Text>
-            <Text style={styles.driverEmail}>{profileUser?.email}</Text>
-            <View style={styles.ratingContainer}>
-              <Icon name="star" size={16} color="#fbbf24" />
-              <Text style={styles.rating}>{stats.rating}</Text>
-              <Text style={styles.ratingText}>• Professional Driver</Text>
+          {/* Information Cards */}
+          <View style={styles.infoCards}>
+            {/* Personal Information Card */}
+            <View style={styles.infoCard}>
+              <View style={styles.cardHeader}>
+                <Icon name="person-outline" size={20} color={COLORS.blue} />
+                <Text style={styles.cardTitle}>Personal Information</Text>
+              </View>
+              <View style={styles.cardContent}>
+                <View style={styles.infoRow}>
+                  <View style={styles.infoIcon}>
+                    <Icon name="phone" size={16} color="#717182" />
+                  </View>
+                  <View style={styles.infoText}>
+                    <Text style={styles.infoLabel}>Phone Number</Text>
+                    <Text style={styles.infoValue}>
+                      {profileUser?.phone || 'Not added'}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.infoRow}>
+                  <View style={styles.infoIcon}>
+                    <Icon name="email" size={16} color="#717182" />
+                  </View>
+                  <View style={styles.infoText}>
+                    <Text style={styles.infoLabel}>Email</Text>
+                    <Text style={styles.infoValue}>
+                      {profileUser?.email || 'Not added'}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.infoRow}>
+                  <View style={styles.infoIcon}>
+                    <Icon name="location-on" size={16} color="#717182" />
+                  </View>
+                  <View style={styles.infoText}>
+                    <Text style={styles.infoLabel}>Address</Text>
+                    <Text style={styles.infoValue}>
+                      {profileUser?.address || 'Not added'}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.infoRow}>
+                  <View style={styles.infoIcon}>
+                    <Icon name="credit-card" size={16} color="#717182" />
+                  </View>
+                  <View style={styles.infoText}>
+                    <Text style={styles.infoLabel}>PAN</Text>
+                    <Text style={styles.infoValue}>
+                      {deliveryAgent?.panCardNumber || 'Not added'}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.infoRow}>
+                  <View style={styles.infoIcon}>
+                    <Icon name="badge" size={16} color="#717182" />
+                  </View>
+                  <View style={styles.infoText}>
+                    <Text style={styles.infoLabel}>Aadhar</Text>
+                    <Text style={styles.infoValue}>
+                      {deliveryAgent?.aadharCardNumber || 'Not added'}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.infoRow}>
+                  <View style={styles.infoIcon}>
+                    <Icon name="drive-eta" size={16} color="#717182" />
+                  </View>
+                  <View style={styles.infoText}>
+                    <Text style={styles.infoLabel}>License Number</Text>
+                    <Text style={styles.infoValue}>
+                      {deliveryAgent?.drivingLicence || 'Not added'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+
+            {/* Vehicle Information Card */}
+            <View style={styles.infoCard}>
+              <View style={styles.cardHeader}>
+                <Icon name="directions-car" size={20} color={COLORS.blue} />
+                <Text style={styles.cardTitle}>Vehicle Information</Text>
+              </View>
+              <View style={styles.cardContent}>
+                <View style={styles.infoRow}>
+                  <View style={styles.infoIcon}>
+                    <Icon name="directions-car" size={16} color="#717182" />
+                  </View>
+                  <View style={styles.infoText}>
+                    <Text style={styles.infoLabel}>Vehicle Number</Text>
+                    <Text style={styles.infoValue}>
+                      {deliveryAgent?.vehicleNumber || 'Not added'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+
+            {/* Bank Details Card */}
+            <View style={styles.infoCard}>
+              <View style={styles.cardHeader}>
+                <Icon name="account-balance" size={20} color={COLORS.blue} />
+                <Text style={styles.cardTitle}>Bank Details</Text>
+              </View>
+              <View style={styles.cardContent}>
+                <View style={styles.infoRow}>
+                  <View style={styles.infoIcon}>
+                    <Icon name="account-balance" size={16} color="#717182" />
+                  </View>
+                  <View style={styles.infoText}>
+                    <Text style={styles.infoLabel}>Bank Details</Text>
+                    <Text style={styles.infoValue}>
+                      {deliveryAgent?.bankDetails || 'Not added'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+
+            {/* Status Information Card */}
+            <View style={styles.infoCard}>
+              <View style={styles.cardHeader}>
+                <Icon name="info-outline" size={20} color={COLORS.blue} />
+                <Text style={styles.cardTitle}>Status Information</Text>
+              </View>
+              <View style={styles.cardContent}>
+                <View style={styles.infoRow}>
+                  <View style={styles.infoIcon}>
+                    <Icon
+                      name="check-circle"
+                      size={16}
+                      color={
+                        deliveryAgent?.status === 'online'
+                          ? '#10b981'
+                          : '#717182'
+                      }
+                    />
+                  </View>
+                  <View style={styles.infoText}>
+                    <Text style={styles.infoLabel}>Status</Text>
+                    <Text style={styles.infoValue}>
+                      {deliveryAgent?.status || 'Active'}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.infoRow}>
+                  <View style={styles.infoIcon}>
+                    <Icon name="calendar-today" size={16} color="#717182" />
+                  </View>
+                  <View style={styles.infoText}>
+                    <Text style={styles.infoLabel}>Joined Date</Text>
+                    <Text style={styles.infoValue}>
+                      {deliveryAgent?.joinedAt
+                        ? new Date(deliveryAgent.joinedAt).toLocaleDateString(
+                            'en-GB',
+                          )
+                        : 'Not available'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
             </View>
           </View>
         </View>
 
-        {/* Information Cards */}
-        <View style={styles.infoCards}>
-          {/* Personal Information Card */}
-          <View style={styles.infoCard}>
-            <View style={styles.cardHeader}>
-              <Icon name="person-outline" size={20} color={COLORS.blue} />
-              <Text style={styles.cardTitle}>Personal Information</Text>
-            </View>
-            <View style={styles.cardContent}>
-              <View style={styles.infoRow}>
-                <View style={styles.infoIcon}>
-                  <Icon name="phone" size={16} color="#717182" />
-                </View>
-                <View style={styles.infoText}>
-                  <Text style={styles.infoLabel}>Phone Number</Text>
-                  <Text style={styles.infoValue}>
-                    {profileUser?.phone || 'Not added'}
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.infoRow}>
-                <View style={styles.infoIcon}>
-                  <Icon name="email" size={16} color="#717182" />
-                </View>
-                <View style={styles.infoText}>
-                  <Text style={styles.infoLabel}>Email</Text>
-                  <Text style={styles.infoValue}>
-                    {profileUser?.email || 'Not added'}
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.infoRow}>
-                <View style={styles.infoIcon}>
-                  <Icon name="location-on" size={16} color="#717182" />
-                </View>
-                <View style={styles.infoText}>
-                  <Text style={styles.infoLabel}>Address</Text>
-                  <Text style={styles.infoValue}>
-                    {profileUser?.address || 'Not added'}
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.infoRow}>
-                <View style={styles.infoIcon}>
-                  <Icon name="credit-card" size={16} color="#717182" />
-                </View>
-                <View style={styles.infoText}>
-                  <Text style={styles.infoLabel}>PAN</Text>
-                  <Text style={styles.infoValue}>
-                    {deliveryAgent?.panCardNumber || 'Not added'}
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.infoRow}>
-                <View style={styles.infoIcon}>
-                  <Icon name="badge" size={16} color="#717182" />
-                </View>
-                <View style={styles.infoText}>
-                  <Text style={styles.infoLabel}>Aadhar</Text>
-                  <Text style={styles.infoValue}>
-                    {deliveryAgent?.aadharCardNumber || 'Not added'}
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.infoRow}>
-                <View style={styles.infoIcon}>
-                  <Icon name="drive-eta" size={16} color="#717182" />
-                </View>
-                <View style={styles.infoText}>
-                  <Text style={styles.infoLabel}>License Number</Text>
-                  <Text style={styles.infoValue}>
-                    {deliveryAgent?.drivingLicence || 'Not added'}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </View>
+        <View style={styles.menuSection}>
+          <Text style={styles.sectionTitle}>Account</Text>
 
-          {/* Vehicle Information Card */}
-          <View style={styles.infoCard}>
-            <View style={styles.cardHeader}>
-              <Icon name="directions-car" size={20} color={COLORS.blue} />
-              <Text style={styles.cardTitle}>Vehicle Information</Text>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => navigation.navigate('EditProfile')}
+          >
+            <View style={styles.menuItemLeft}>
+              <Icon name="person" size={20} color="#030213" />
+              <Text style={styles.menuItemText}>Edit Profile</Text>
             </View>
-            <View style={styles.cardContent}>
-              <View style={styles.infoRow}>
-                <View style={styles.infoIcon}>
-                  <Icon name="directions-car" size={16} color="#717182" />
-                </View>
-                <View style={styles.infoText}>
-                  <Text style={styles.infoLabel}>Vehicle Number</Text>
-                  <Text style={styles.infoValue}>
-                    {deliveryAgent?.vehicleNumber || 'Not added'}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </View>
+            <Icon name="chevron-right" size={20} color="#717182" />
+          </TouchableOpacity>
 
-          {/* Bank Details Card */}
-          <View style={styles.infoCard}>
-            <View style={styles.cardHeader}>
-              <Icon name="account-balance" size={20} color={COLORS.blue} />
-              <Text style={styles.cardTitle}>Bank Details</Text>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => navigation.navigate('HelpSupport')}
+          >
+            <View style={styles.menuItemLeft}>
+              <Icon name="help" size={20} color="#030213" />
+              <Text style={styles.menuItemText}>Help & Support</Text>
             </View>
-            <View style={styles.cardContent}>
-              <View style={styles.infoRow}>
-                <View style={styles.infoIcon}>
-                  <Icon name="account-balance" size={16} color="#717182" />
-                </View>
-                <View style={styles.infoText}>
-                  <Text style={styles.infoLabel}>Bank Details</Text>
-                  <Text style={styles.infoValue}>
-                    {deliveryAgent?.bankDetails || 'Not added'}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </View>
+            <Icon name="chevron-right" size={20} color="#717182" />
+          </TouchableOpacity>
 
-          {/* Status Information Card */}
-          <View style={styles.infoCard}>
-            <View style={styles.cardHeader}>
-              <Icon name="info-outline" size={20} color={COLORS.blue} />
-              <Text style={styles.cardTitle}>Status Information</Text>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => navigation.navigate('AboutUs')}
+          >
+            <View style={styles.menuItemLeft}>
+              <Icon name="info" size={20} color="#030213" />
+              <Text style={styles.menuItemText}>About</Text>
             </View>
-            <View style={styles.cardContent}>
-              <View style={styles.infoRow}>
-                <View style={styles.infoIcon}>
-                  <Icon
-                    name="check-circle"
-                    size={16}
-                    color={
-                      deliveryAgent?.status === 'online' ? '#10b981' : '#717182'
-                    }
-                  />
-                </View>
-                <View style={styles.infoText}>
-                  <Text style={styles.infoLabel}>Status</Text>
-                  <Text style={styles.infoValue}>
-                    {deliveryAgent?.status || 'Active'}
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.infoRow}>
-                <View style={styles.infoIcon}>
-                  <Icon name="calendar-today" size={16} color="#717182" />
-                </View>
-                <View style={styles.infoText}>
-                  <Text style={styles.infoLabel}>Joined Date</Text>
-                  <Text style={styles.infoValue}>
-                    {deliveryAgent?.joinedAt
-                      ? new Date(deliveryAgent.joinedAt).toLocaleDateString(
-                          'en-GB',
-                        )
-                      : 'Not available'}
-                  </Text>
-                </View>
-              </View>
+            <Icon name="chevron-right" size={20} color="#717182" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.menuItem, styles.logoutItem]}
+            onPress={handleLogout}
+          >
+            <View style={styles.menuItemLeft}>
+              <Icon name="logout" size={20} color="#ef4444" />
+              <Text style={[styles.menuItemText, styles.logoutText]}>
+                Logout
+              </Text>
             </View>
-          </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.menuItem, styles.deleteItem]}
+            onPress={handleDeleteAccount}
+          >
+            <View style={styles.menuItemLeft}>
+              <Icon name="delete-forever" size={20} color="#ef4444" />
+              <Text style={[styles.menuItemText, styles.deleteText]}>
+                Delete Account
+              </Text>
+            </View>
+          </TouchableOpacity>
         </View>
-      </View>
-
-      <View style={styles.menuSection}>
-        <Text style={styles.sectionTitle}>Account</Text>
-
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => navigation.navigate('EditProfile')}
-        >
-          <View style={styles.menuItemLeft}>
-            <Icon name="person" size={20} color="#030213" />
-            <Text style={styles.menuItemText}>Edit Profile</Text>
-          </View>
-          <Icon name="chevron-right" size={20} color="#717182" />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => navigation.navigate('HelpSupport')}
-        >
-          <View style={styles.menuItemLeft}>
-            <Icon name="help" size={20} color="#030213" />
-            <Text style={styles.menuItemText}>Help & Support</Text>
-          </View>
-          <Icon name="chevron-right" size={20} color="#717182" />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => navigation.navigate('AboutUs')}
-        >
-          <View style={styles.menuItemLeft}>
-            <Icon name="info" size={20} color="#030213" />
-            <Text style={styles.menuItemText}>About</Text>
-          </View>
-          <Icon name="chevron-right" size={20} color="#717182" />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.menuItem, styles.logoutItem]}
-          onPress={handleLogout}
-        >
-          <View style={styles.menuItemLeft}>
-            <Icon name="logout" size={20} color="#ef4444" />
-            <Text style={[styles.menuItemText, styles.logoutText]}>Logout</Text>
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.menuItem, styles.deleteItem]}
-          onPress={handleDeleteAccount}
-        >
-          <View style={styles.menuItemLeft}>
-            <Icon name="delete-forever" size={20} color="#ef4444" />
-            <Text style={[styles.menuItemText, styles.deleteText]}>
-              Delete Account
-            </Text>
-          </View>
-        </TouchableOpacity>
-      </View>
+      </ScrollView>
 
       <CustomAlert
         visible={showLogoutAlert}
@@ -430,7 +448,7 @@ const ProfileScreen = ({ navigation }) => {
         onConfirm={confirmDeleteAccount}
         onCancel={cancelDeleteAccount}
       />
-    </ScrollView>
+    </View>
   );
 };
 
@@ -441,7 +459,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
+    paddingTop: 60,
     paddingBottom: spacing.xl,
     flexDirection: 'row',
     alignItems: 'center',
@@ -454,6 +472,9 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xl,
     fontWeight: '600',
     color: 'white', // Dark text
+  },
+  backButton: {
+    padding: spacing.sm,
   },
   headerActions: {
     flexDirection: 'row',

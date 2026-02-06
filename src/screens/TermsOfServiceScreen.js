@@ -7,11 +7,12 @@ import {
   ScrollView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { fontSize, spacing, borderRadius ,wp,hp} from '../utils/dimensions';
+import { fontSize, spacing, borderRadius, wp, hp } from '../utils/dimensions';
+import { COLORS } from '../utils/constants';
 
 const TermsOfServiceScreen = ({navigation}) => {
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Icon name="arrow-back" size={24} color="#ffffff" />
@@ -20,7 +21,11 @@ const TermsOfServiceScreen = ({navigation}) => {
         <View style={styles.placeholder} />
       </View>
 
-      <View style={styles.content}>
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: spacing.xl }}
+      >
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Terms of Service</Text>
           <Text style={styles.lastUpdated}>Last updated: December 2024</Text>
@@ -113,8 +118,8 @@ const TermsOfServiceScreen = ({navigation}) => {
             use of our service. We reserve the right to modify these terms at any time.
           </Text>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 };
 
@@ -128,9 +133,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
+    paddingTop: 60,
     paddingBottom: spacing.xl,
-    backgroundColor: "#035db7",
+    minHeight: hp(18),
+    backgroundColor: COLORS.primary,
     borderBottomLeftRadius: borderRadius.xl,
     borderBottomRightRadius: borderRadius.xl,
   },
@@ -138,9 +144,11 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
   },
   headerTitle: {
+    flex: 1,
     fontSize: fontSize.lg,
     fontWeight: '600',
     color: '#ffffff', // White text
+    textAlign: 'center',
   },
   placeholder: {
     width: wp('10%'),
@@ -149,95 +157,59 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
   },
   section: {
-    marginTop: spacing.xl,
+    marginTop: spacing.lg,
+    backgroundColor: '#ffffff',
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#f3f4f6',
   },
   sectionTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
-    color: '#1f2937', // Dark text
-    marginBottom: spacing.md,
-  },
-  lastUpdated: {
-    fontSize: fontSize.sm,
-    color: '#717182',
-    fontStyle: 'italic',
-  },
-  paragraph: {
     fontSize: fontSize.md,
-    color: '#717182',
-    lineHeight: 24,
-    marginBottom: spacing.md,
-  },
-  bulletPoint: {
-    fontSize: fontSize.md,
-    color: '#717182',
-    lineHeight: 24,
-    marginLeft: spacing.lg,
+    fontWeight: '700',
+    color: '#1f2937',
     marginBottom: spacing.sm,
   },
+  lastUpdated: {
+    fontSize: fontSize.xs,
+    color: '#9ca3af',
+    fontStyle: 'italic',
+    marginBottom: spacing.sm,
+  },
+  paragraph: {
+    fontSize: fontSize.sm,
+    color: '#6b7280',
+    lineHeight: 20,
+    marginBottom: spacing.sm,
+  },
+  bulletPoint: {
+    fontSize: fontSize.sm,
+    color: '#6b7280',
+    lineHeight: 20,
+    marginLeft: spacing.md,
+    marginBottom: spacing.xs,
+  },
   contactInfo: {
-    fontSize: fontSize.md,
-    color: '#030213',
-    fontWeight: '500',
-    marginTop: spacing.sm,
+    fontSize: fontSize.sm,
+    color: COLORS.blue,
+    fontWeight: '600',
+    marginTop: spacing.xs,
   },
   footer: {
     alignItems: 'center',
-    paddingVertical: spacing.xxl,
+    paddingVertical: spacing.lg,
+    marginTop: spacing.md,
   },
   footerText: {
-    fontSize: fontSize.sm,
-    color: '#717182',
+    fontSize: fontSize.xs,
+    color: '#9ca3af',
     textAlign: 'center',
-    lineHeight: 20,
-  },
-  description: {
-    fontSize: fontSize.md,
-    lineHeight: 24,
-    color: '#6b7280', // Gray text
-    marginBottom: spacing.lg,
-  },
-  card: {
-    backgroundColor: '#ffffff', // White background
-    borderRadius: borderRadius.lg,
-    padding: 20,
-    marginBottom: spacing.lg,
-    shadowColor: '#1f2937', // Dark shadow
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: spacing.sm,
-    elevation: 3,
-  },
-  cardTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
-    color: '#1f2937', // Dark text
-    marginBottom: spacing.sm,
-  },
-  cardText: {
-    fontSize: fontSize.sm,
-    lineHeight: 20,
-    color: '#6b7280', // Gray text
-  },
-  listItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 8,
-  },
-  bullet: {
-    fontSize: 16,
-    color: '#6b7280', // Gray text
-    marginRight: 8,
-    marginTop: 2,
-  },
-  listText: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: '#6b7280', // Gray text
-    flex: 1,
+    lineHeight: 18,
   },
 });
 

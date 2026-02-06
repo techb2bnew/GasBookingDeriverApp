@@ -582,8 +582,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
+    paddingTop: 60,
     paddingBottom: spacing.xl,
+    minHeight: hp(14),
     backgroundColor: "#035db7",
     borderBottomLeftRadius: borderRadius.xl,
     borderBottomRightRadius: borderRadius.xl,
@@ -592,9 +593,11 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
   },
   headerTitle: {
+    flex: 1,
     fontSize: fontSize.lg,
     fontWeight: '600',
     color: '#ffffff', // White text
+    textAlign: 'center',
   },
   headerRight: {
     width: wp('10%'),

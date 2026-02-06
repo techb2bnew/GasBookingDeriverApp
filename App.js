@@ -301,16 +301,16 @@ const App = () => {
 
   return (
     <SafeAreaProvider style={{ flex: 1 }}>
-      <SafeAreaView
+      {/* <SafeAreaView
         style={{ flex: 1, backgroundColor: '#ffffff' }}
         edges={['top', 'left', 'right']}
-      >
+      > */}
         <View style={{ flex: 1, backgroundColor: '#ffffff' }}>
           <AuthProvider>
             <AppWithSocket />
           </AuthProvider>
         </View>
-      </SafeAreaView>
+      {/* </SafeAreaView> */}
     </SafeAreaProvider>
   );
 };

@@ -191,7 +191,14 @@ const OrderHistoryScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Icon name="arrow-back" size={24} color="#ffffff" />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Order History</Text>
+        <View style={styles.headerRight} />
       </View>
 
       {/* Stats Section */}
@@ -283,16 +290,28 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
+    paddingTop: 60,
     paddingBottom: spacing.xl,
+    minHeight: hp(14),
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: COLORS.primary,
     borderBottomLeftRadius: borderRadius.xl,
     borderBottomRightRadius: borderRadius.xl,
   },
   headerTitle: {
+    flex: 1,
     fontSize: fontSize.xl,
     fontWeight: '600',
     color: 'white', // Dark text
+    textAlign: 'center',
+  },
+  backButton: {
+    padding: spacing.sm,
+  },
+  headerRight: {
+    width: spacing.xl,
   },
   statsContainer: {
     flexDirection: 'row',

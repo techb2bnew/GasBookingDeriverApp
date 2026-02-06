@@ -7,13 +7,16 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_ENDPOINTS } from '../utils/constants';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { borderRadius, spacing } from '../utils/dimensions';
+import { borderRadius, spacing, hp } from '../utils/dimensions';
+import { authService } from '../services/authService';
+import { useOrder } from '../context/OrderContext';
 
 const COLORS = {
   // Red Theme Colors
@@ -87,6 +90,7 @@ const NotificationItem = ({ item, onPress }) => {
 
 const NotificationScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
+  const { setCurrentOrder } = useOrder();
 
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -124,7 +128,13 @@ const NotificationScreen = ({ navigation }) => {
       const data = await response.json();
 
       if (response.ok) {
-        setNotifications(data?.data?.notifications || []);
+        const notificationsList = data?.data?.notifications || [];
+        console.log('Fetched notifications:', notificationsList);
+        // Log first notification structure for debugging
+        if (notificationsList.length > 0) {
+          console.log('Sample notification structure:', JSON.stringify(notificationsList[0], null, 2));
+        }
+        setNotifications(notificationsList);
       }
     } catch (error) {
       console.log('fetchNotifications error', error);
@@ -159,12 +169,62 @@ const NotificationScreen = ({ navigation }) => {
     }
   };
 
+  // Extract order ID from notification content
+  const extractOrderId = (notification) => {
+    console.log('Extracting order ID from notification:', notification);
+    
+    // Check if notification has orderId field (various formats)
+    if (notification.orderId) {
+      console.log('Found orderId:', notification.orderId);
+      return notification.orderId;
+    }
+    
+    if (notification.order_id) {
+      console.log('Found order_id:', notification.order_id);
+      return notification.order_id;
+    }
+    
+    if (notification.data?.orderId) {
+      console.log('Found data.orderId:', notification.data.orderId);
+      return notification.data.orderId;
+    }
+    
+    if (notification.metadata?.orderId) {
+      console.log('Found metadata.orderId:', notification.metadata.orderId);
+      return notification.metadata.orderId;
+    }
+    
+    // Try to extract from content text (e.g., "#ORD-035850-6NBPXN")
+    const contentText = notification.content || notification.message || '';
+    const orderMatch = contentText.match(/#ORD-[\w-]+/);
+    if (orderMatch) {
+      // Use full order number format (e.g., "ORD-035850-6NBPXN")
+      const orderNumber = orderMatch[0].replace('#', '');
+      console.log('Extracted order number from content:', orderNumber);
+      return orderNumber;
+    }
+    
+    // Try to extract from title
+    const titleText = notification.title || '';
+    const titleMatch = titleText.match(/#ORD-[\w-]+/);
+    if (titleMatch) {
+      const orderNumber = titleMatch[0].replace('#', '');
+      console.log('Extracted order number from title:', orderNumber);
+      return orderNumber;
+    }
+    
+    console.warn('Could not extract order ID from notification');
+    return null;
+  };
+
   // =========================
   // PUT /api/notifications/:id/read
   // =========================
   const markAsRead = async notification => {
     try {
       const token = await AsyncStorage.getItem('authToken');
+      
+      // Mark notification as read
       await fetch(
         `${API_ENDPOINTS.BASE_URL}/api/notifications/${notification.id}/read`,
         {
@@ -180,9 +240,45 @@ const NotificationScreen = ({ navigation }) => {
       );
 
       setUnreadCount(prev => Math.max(prev - 1, 0));
-      navigation.navigate('Orders');
+      
+      // Extract order ID and navigate to order detail
+      const orderId = extractOrderId(notification);
+      
+      if (orderId) {
+        try {
+          console.log('Fetching order details for orderId:', orderId);
+          // Fetch order details
+          const result = await authService.getOrderById(token, orderId);
+          
+          console.log('Order fetch result:', result);
+          
+          if (result.success && result.order) {
+            // Set the order in context for order detail screen
+            setCurrentOrder(result.order);
+            console.log('Navigating to OrderDetail screen');
+            // Navigate to OrderDetail screen
+            navigation.navigate('OrderDetail');
+          } else {
+            // If order not found, try with order number format
+            console.warn('Order not found with ID, trying alternative...');
+            // Navigate to Dashboard as fallback
+            navigation.navigate('Dashboard');
+          }
+        } catch (error) {
+          console.error('Error fetching order details:', error);
+          Alert.alert('Error', 'Failed to load order details. Please try again.');
+          // Don't navigate on error, let user stay on notification screen
+        }
+      } else {
+        // If no order ID found, just mark as read and stay on screen
+        console.warn('No order ID found in notification');
+        // Optionally show a message or navigate to Dashboard
+        // navigation.navigate('Dashboard');
+      }
     } catch (error) {
-      console.log('markAsRead error', error);
+      console.error('markAsRead error:', error);
+      Alert.alert('Error', 'Failed to process notification. Please try again.');
+      // Don't navigate on error, let user stay on notification screen
     }
   };
 
@@ -221,9 +317,12 @@ const NotificationScreen = ({ navigation }) => {
     );
   };
   return (
-    <SafeAreaView style={[styles.container, { paddingTop: 2 }]}>
+    <View style={[styles.container]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
           <Ionicons name="arrow-back" size={24} color={COLORS.white} />
         </TouchableOpacity>
 
@@ -231,7 +330,11 @@ const NotificationScreen = ({ navigation }) => {
           Notifications {unreadCount > 0 ? `(${unreadCount})` : ''}
         </Text>
 
-        <TouchableOpacity onPress={markAllAsRead} disabled={unreadCount === 0}>
+        <TouchableOpacity
+          style={styles.clearButton}
+          onPress={markAllAsRead}
+          disabled={unreadCount === 0}
+        >
           <Text
             style={[styles.clearText, unreadCount === 0 && { opacity: 0.5 }]}
           >
@@ -259,7 +362,7 @@ const NotificationScreen = ({ navigation }) => {
           ListEmptyComponent={!loading ? <EmptyNotification /> : null}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -272,8 +375,9 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
+    paddingTop: 60,
     paddingBottom: spacing.xl,
+    minHeight: hp(14),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -282,9 +386,17 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: borderRadius.xl,
   },
   headerTitle: {
+    flex: 1,
     fontSize: 18,
     fontWeight: '700',
     color: COLORS.white,
+    textAlign: 'center',
+  },
+  backButton: {
+    padding: spacing.sm,
+  },
+  clearButton: {
+    padding: spacing.sm,
   },
   clearText: {
     fontSize: 14,
