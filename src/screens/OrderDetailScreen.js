@@ -10,6 +10,7 @@ import {
   Image,
   Modal,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -19,15 +20,88 @@ import { useLocation } from '../context/LocationContext';
 import MapViewDirections from 'react-native-maps-directions';
 import { fontSize, spacing, borderRadius, wp, hp } from '../utils/dimensions';
 import { COLORS } from '../utils/constants';
+import { authService } from '../services/authService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const OrderDetailScreen = ({ navigation }) => {
-  const { currentOrder, updateOrderStatus, acceptOrder } = useOrder();
-  const { currentLocation, route, eta, getRoute } = useLocation();
+const OrderDetailScreen = ({ navigation, route }) => {
+  const { currentOrder, updateOrderStatus, acceptOrder, setCurrentOrder } = useOrder();
+  const { currentLocation, route: locationRoute, eta, getRoute } = useLocation();
   const [mapRegion, setMapRegion] = useState(null);
   const [customerCoordinates, setCustomerCoordinates] = useState(null);
+  const [loadingOrder, setLoadingOrder] = useState(false);
   console.log('currentOrdercurrentOrder', currentOrder);
 
   const mapRef = useRef(null);
+
+  // Fetch order by orderId if passed via route params (from notification)
+  useEffect(() => {
+    const fetchOrderFromParams = async (retryCount = 0) => {
+      const orderId = route?.params?.orderId;
+      
+      if (orderId && (!currentOrder || currentOrder.id !== orderId)) {
+        console.log('Fetching order from notification orderId:', orderId, 'Retry:', retryCount);
+        setLoadingOrder(true);
+        try {
+          const token = await AsyncStorage.getItem('authToken');
+          
+          if (token) {
+            const result = await authService.getOrderById(token, orderId);
+            if (result.success && result.order) {
+              setCurrentOrder(result.order);
+              console.log('Order fetched successfully:', result.order.orderNumber);
+              setLoadingOrder(false);
+            } else {
+              console.error('Failed to fetch order:', result.error);
+              // Retry up to 3 times with delay
+              if (retryCount < 3) {
+                setTimeout(() => {
+                  fetchOrderFromParams(retryCount + 1);
+                }, 1000 * (retryCount + 1)); // 1s, 2s, 3s delays
+              } else {
+                console.error('Max retries reached, order fetch failed');
+                setLoadingOrder(false);
+              }
+            }
+          } else {
+            console.error('No auth token found');
+            // Retry after delay in case token is being set
+            if (retryCount < 2) {
+              setTimeout(() => {
+                fetchOrderFromParams(retryCount + 1);
+              }, 1000);
+            } else {
+              setLoadingOrder(false);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching order from params:', error);
+          // Retry up to 3 times with delay
+          if (retryCount < 3) {
+            setTimeout(() => {
+              fetchOrderFromParams(retryCount + 1);
+            }, 1000 * (retryCount + 1));
+          } else {
+            console.error('Max retries reached, order fetch failed');
+            setLoadingOrder(false);
+          }
+        }
+      } else if (!orderId && !currentOrder) {
+        // No orderId in params and no currentOrder - don't show anything
+        setLoadingOrder(false);
+      } else {
+        setLoadingOrder(false);
+      }
+    };
+
+    fetchOrderFromParams();
+  }, [route?.params?.orderId, currentOrder, setCurrentOrder, navigation]);
+
+  // Don't render screen if order is not available (no empty/default values)
+  // Only render when order is successfully fetched
+  if (!currentOrder) {
+    // Return empty view - no error, no loading, no empty values
+    return <View style={{ flex: 1, backgroundColor: COLORS.background }} />;
+  }
 
   // Geocode customer address when order changes
   useEffect(() => {
@@ -103,7 +177,7 @@ const OrderDetailScreen = ({ navigation }) => {
   };
 
   const getCurrentDestination = () => {
-    if (!currentOrder) return null;
+    if (!currentOrder || !currentOrder.customerAddress) return null;
 
     // Use geocoded coordinates if available
     if (customerCoordinates) {
@@ -123,6 +197,11 @@ const OrderDetailScreen = ({ navigation }) => {
   };
 
   const handleAcceptOrder = async () => {
+    if (!currentOrder?.id) {
+      Alert.alert('Error', 'Order ID not found');
+      return;
+    }
+
     Alert.alert(
       'Accept Order',
       'Are you sure you want to accept this gas delivery order?',
@@ -131,11 +210,16 @@ const OrderDetailScreen = ({ navigation }) => {
         {
           text: 'Accept',
           onPress: async () => {
-            const result = await acceptOrder(currentOrder.id);
-            if (result.success) {
-              Alert.alert('Success', 'Order accepted successfully!');
-            } else {
-              Alert.alert('Error', 'Failed to accept order');
+            try {
+              const result = await acceptOrder(currentOrder.id);
+              if (result.success) {
+                Alert.alert('Success', 'Order accepted successfully!');
+              } else {
+                Alert.alert('Error', result.error || 'Failed to accept order');
+              }
+            } catch (error) {
+              console.error('Error accepting order:', error);
+              Alert.alert('Error', 'Failed to accept order. Please try again.');
             }
           },
         },
@@ -149,6 +233,11 @@ const OrderDetailScreen = ({ navigation }) => {
   };
 
   const updateStatusWithNotes = async (status, notes) => {
+    if (!currentOrder?.id) {
+      Alert.alert('Error', 'Order ID not found');
+      return;
+    }
+
     try {
       const result = await updateOrderStatus(status, notes);
       if (result.success) {
@@ -156,18 +245,27 @@ const OrderDetailScreen = ({ navigation }) => {
           navigation.navigate('Delivery');
         }
       } else {
-        console.log('Error', result.error || 'Failed to update order status');
+        Alert.alert('Error', result.error || 'Failed to update order status');
       }
     } catch (error) {
-      console.log('Error', 'Failed to update order status');
+      console.error('Error updating order status:', error);
+      Alert.alert('Error', 'Failed to update order status. Please try again.');
     }
   };
 
   const handleCall = phoneNumber => {
-    Linking.openURL(`tel:${phoneNumber}`);
+    if (!phoneNumber) {
+      Alert.alert('Error', 'Phone number not available');
+      return;
+    }
+    Linking.openURL(`tel:${phoneNumber}`).catch(error => {
+      console.error('Error opening phone dialer:', error);
+      Alert.alert('Error', 'Failed to open phone dialer');
+    });
   };
 
   const getStatusButtons = () => {
+    if (!currentOrder) return [];
     const status = currentOrder?.status;
 
     switch (status) {
@@ -212,13 +310,9 @@ const OrderDetailScreen = ({ navigation }) => {
     }
   };
 
-  if (!currentOrder) {
-    return (
-      <View style={styles.container}>
-        <Text>No active order</Text>
-      </View>
-    );
-  }
+  // No "No active order" screen - screen will render with empty/default values
+  // No error screens - screen will render with empty/default values if currentOrder is null
+
   const capitalizeFirstLetter = text => {
     if (!text) return '';
     return text.charAt(0).toUpperCase() + text.slice(1);
@@ -239,8 +333,7 @@ const OrderDetailScreen = ({ navigation }) => {
           <Icon name="arrow-back" size={24} color="#ffffff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>
-          {`Order #${truncateText(currentOrder?.id, 18)}` ||
-            currentOrder?.orderNumber}
+          {currentOrder?.orderNumber || `Order #${truncateText(currentOrder?.id || '', 18)}` || 'Order Details'}
         </Text>
         <View style={styles.headerRight} />
       </View>
@@ -344,7 +437,7 @@ const OrderDetailScreen = ({ navigation }) => {
           <View style={styles.infoRow}>
             <Text style={styles.label}>Payment Method:</Text>
             <Text style={styles.value}>
-              {currentOrder?.paymentMethod?.replace(/_/g, ' ').toUpperCase()}
+              {currentOrder?.paymentMethod ? currentOrder.paymentMethod.replace(/_/g, ' ').toUpperCase() : 'N/A'}
             </Text>
           </View>
           <View style={styles.infoRow}>
@@ -357,23 +450,23 @@ const OrderDetailScreen = ({ navigation }) => {
                   : styles.completedStatus,
               ]}
             >
-              {currentOrder?.paymentStatus?.toUpperCase()}
+              {currentOrder?.paymentStatus ? currentOrder.paymentStatus.toUpperCase() : 'N/A'}
             </Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.label}>Total Amount:</Text>
-            <Text style={styles.value}>KSH{currentOrder?.totalAmount}</Text>
+            <Text style={styles.value}>KSH{currentOrder?.totalAmount || '0'}</Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.label}>Status:</Text>
             <Text style={[styles.value, styles.status]}>
-              {currentOrder?.status?.replace(/_/g, ' ').toUpperCase()}
+              {currentOrder?.status ? currentOrder.status.replace(/_/g, ' ').toUpperCase() : 'N/A'}
             </Text>
           </View>
-          {currentOrder.adminNotes && (
+          {currentOrder?.adminNotes && (
             <View style={styles.infoRow}>
               <Text style={styles.label}>Admin Notes:</Text>
-              <Text style={styles.value}>{currentOrder?.adminNotes}</Text>
+              <Text style={styles.value}>{currentOrder?.adminNotes || 'N/A'}</Text>
             </View>
           )}
         </View>
@@ -402,28 +495,32 @@ const OrderDetailScreen = ({ navigation }) => {
           </View>
         )}
 
-        <View style={styles.addressSection}>
-          <Text style={styles.sectionTitle}>Delivery Address</Text>
-          <View style={styles.addressCard}>
-            <Icon name="location-on" size={20} color="#030213" />
-            <Text style={styles.addressText}>
-              {currentOrder?.customerAddress}
-            </Text>
+        {currentOrder?.customerAddress && (
+          <View style={styles.addressSection}>
+            <Text style={styles.sectionTitle}>Delivery Address</Text>
+            <View style={styles.addressCard}>
+              <Icon name="location-on" size={20} color="#030213" />
+              <Text style={styles.addressText}>
+                {currentOrder?.customerAddress || 'N/A'}
+              </Text>
+            </View>
           </View>
-        </View>
+        )}
 
-        <View style={styles.contactSection}>
-          <Text style={styles.sectionTitle}>Contact Customer</Text>
-          <TouchableOpacity
-            style={styles.callButton}
-            onPress={() => handleCall(currentOrder?.customerPhone)}
-          >
-            <Icon name="phone" size={20} color="#ffffff" />
-            <Text style={styles.callButtonText}>
-              Call {capitalizeFirstLetter(currentOrder?.customerName)}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        {currentOrder?.customerPhone && (
+          <View style={styles.contactSection}>
+            <Text style={styles.sectionTitle}>Contact Customer</Text>
+            <TouchableOpacity
+              style={styles.callButton}
+              onPress={() => handleCall(currentOrder?.customerPhone)}
+            >
+              <Icon name="phone" size={20} color="#ffffff" />
+              <Text style={styles.callButtonText}>
+                Call {capitalizeFirstLetter(currentOrder?.customerName || 'Customer')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         <View style={styles.actionsSection}>
           {getStatusButtons().map((button, index) => (

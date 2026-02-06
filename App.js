@@ -330,53 +330,127 @@ const AppWithSocket = () => {
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
-    const handleNotificationNavigation = (remoteMessage) => {
-      if (!remoteMessage) return;
+    const handleNotificationNavigation = async (remoteMessage) => {
+      if (!remoteMessage) {
+        console.log('Driver app: No remote message received');
+        return;
+      }
 
-      const data = remoteMessage.data || {};
-      const orderId = data.orderId || data.order_id;
+      const data = remoteMessage.data || remoteMessage.notification?.data || {};
+      let orderId = data.orderId || data.order_id;
       const notificationType = data.type || '';
+      
+      // Fallback: Extract order ID from notification text if not in data
+      if (!orderId) {
+        const notificationBody = remoteMessage.notification?.body || remoteMessage.data?.body || '';
+        const orderMatch = notificationBody.match(/#ORD-[\w-]+/);
+        if (orderMatch) {
+          // Extract order number format (e.g., "ORD-195617-WFWG1N")
+          const orderNumber = orderMatch[0].replace('#', '');
+          console.log('Extracted order number from notification text:', orderNumber);
+          // Try to find orderId from orderNumber (will be handled by screen)
+          orderId = orderNumber;
+        }
+      }
 
       console.log('Driver app: notification opened:', {
         orderId,
         notificationType,
         data,
+        fullMessage: remoteMessage,
       });
 
-      // Wait for navigation to be ready
-      setTimeout(() => {
-        if (navigationRef.current?.isReady()) {
-          // Check for order-related notifications (ORDER_ASSIGNED, ORDER_STATUS, ORDER_CANCELLED, etc.)
+      // Function to fetch order and navigate
+      const fetchOrderAndNavigate = async (retryCount = 0) => {
+        try {
+          // Check for order-related notifications
           if (orderId || notificationType?.includes('ORDER')) {
-            // Navigate to order detail screen for any order-related notification
-            navigationRef.current.navigate('OrderDetail', {
-              orderId: orderId,
-              orderNumber: data.orderNumber || data.order_number,
-            });
+            // Fetch order details first
+            const token = await AsyncStorage.getItem('authToken');
+            if (!token) {
+              console.error('No auth token found');
+              // Navigate to login if not authenticated
+              if (navigationRef.current?.isReady()) {
+                navigationRef.current.navigate('Login');
+              }
+              return;
+            }
+
+            const { authService } = require('./src/services/authService');
+            const result = await authService.getOrderById(token, orderId);
+            
+            if (result.success && result.order) {
+              // Navigate with orderId - screen will fetch and set in context
+              // Wait for navigation to be ready
+              const attemptNavigation = (navRetryCount = 0) => {
+                if (navigationRef.current?.isReady()) {
+                  try {
+                    console.log('Navigating to OrderDetail with orderId:', orderId);
+                    navigationRef.current.navigate('OrderDetail', {
+                      orderId: orderId,
+                      orderNumber: data.orderNumber || data.order_number,
+                    });
+                  } catch (error) {
+                    console.error('Navigation error:', error);
+                  }
+                } else if (navRetryCount < 5) {
+                  setTimeout(() => {
+                    attemptNavigation(navRetryCount + 1);
+                  }, 1000);
+                }
+              };
+              
+              setTimeout(() => {
+                attemptNavigation();
+              }, 500);
+            } else {
+              console.error('Failed to fetch order:', result.error);
+              // Navigate to dashboard if order fetch fails
+              if (navigationRef.current?.isReady()) {
+                navigationRef.current.navigate('Main', {
+                  screen: 'Dashboard',
+                });
+              }
+            }
           } else {
-            // Default: navigate to dashboard
+            // No order ID, navigate to dashboard
+            const attemptNavigation = (navRetryCount = 0) => {
+              if (navigationRef.current?.isReady()) {
+                console.log('Navigating to Dashboard');
+                navigationRef.current.navigate('Main', {
+                  screen: 'Dashboard',
+                });
+              } else if (navRetryCount < 5) {
+                setTimeout(() => {
+                  attemptNavigation(navRetryCount + 1);
+                }, 1000);
+              }
+            };
+            setTimeout(() => {
+              attemptNavigation();
+            }, 500);
+          }
+        } catch (error) {
+          console.error('Error handling notification:', error);
+          // Fallback: navigate to dashboard
+          if (navigationRef.current?.isReady()) {
             navigationRef.current.navigate('Main', {
               screen: 'Dashboard',
             });
           }
-        } else {
-          console.warn('Navigation not ready yet, retrying...');
-          // Retry after another second if navigation not ready
-          setTimeout(() => {
-            if (navigationRef.current?.isReady() && orderId) {
-              navigationRef.current.navigate('OrderDetail', {
-                orderId: orderId,
-                orderNumber: data.orderNumber || data.order_number,
-              });
-            }
-          }, 1000);
         }
-      }, 1000); // Wait 1 second for navigation to initialize
+      };
+
+      // Start processing after a short delay
+      setTimeout(() => {
+        fetchOrderAndNavigate();
+      }, 500);
     };
 
     // App background me tha, notification tap se open hua
     const unsubscribeFromOpened = messaging().onNotificationOpenedApp(
       remoteMessage => {
+        console.log('Driver app: Notification opened from background');
         handleNotificationNavigation(remoteMessage);
       },
     );
@@ -386,8 +460,12 @@ const AppWithSocket = () => {
       .getInitialNotification()
       .then(remoteMessage => {
         if (remoteMessage) {
+          console.log('Driver app: Notification opened from quit state');
           handleNotificationNavigation(remoteMessage);
         }
+      })
+      .catch(error => {
+        console.error('Error getting initial notification:', error);
       });
 
     return unsubscribeFromOpened;
