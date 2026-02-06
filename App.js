@@ -39,7 +39,7 @@ import ActiveOrdersScreen from './src/screens/ActiveOrdersScreen';
 import { borderRadius, fontSize, spacing } from './src/utils/dimensions';
 import { COLORS } from './src/utils/constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import messaging from '@react-native-firebase/messaging';
+// import messaging from '@react-native-firebase/messaging';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -79,6 +79,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
           <TouchableOpacity
             key={route.key}
             onPress={onPress}
+            activeOpacity={0.8}
             style={styles.tabItem}
           >
             <View
@@ -106,53 +107,46 @@ const styles = StyleSheet.create({
   tabBar: {
     flexDirection: 'row',
     backgroundColor: '#ffffff',
-    borderTopWidth: 0,
-    height: 75,
-    paddingBottom: spacing.md,
-    paddingTop: spacing.md,
-    paddingHorizontal: Platform.OS === 'ios' ? 0 : spacing.md,
-    marginVertical: 10,
-    marginHorizontal: spacing.xl,
-    borderRadius: borderRadius.lg,
+    marginHorizontal: 16,
+    marginBottom: Platform.OS === 'ios' ? 12 : 10,
+    paddingVertical: 10,
+    borderRadius: 28,
+
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 10,
   },
+
   tabItem: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
+
   tabContent: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.xl,
-    minWidth: 100,
-    position: 'relative',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 22,
+    minWidth: 78,
   },
   tabContentActive: {
     backgroundColor: COLORS.primary,
     borderRadius: borderRadius.xl,
   },
   tabLabel: {
-    fontSize: Platform.OS === 'ios' ? fontSize.sm : fontSize.sm,
-    fontWeight: '700',
-    marginTop: spacing.sm,
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 4,
     color: COLORS.blue,
-    letterSpacing: 0.5,
   },
+
   tabLabelActive: {
-    color: '#ffffff',
-    fontWeight: '800',
+    color: '#fff',
+    fontWeight: '700',
   },
 });
 
@@ -215,16 +209,16 @@ const AppNavigator = () => {
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
-  useEffect(() => {
-    const requestPermissions = async () => {
-      if (Platform.OS === 'ios') {
-        await requestUserIosPermission();
-      } else {
-        await requestNotificationPermission();
-      }
-    };
-    requestPermissions();
-  }, []);
+  // useEffect(() => {
+  //   const requestPermissions = async () => {
+  //     if (Platform.OS === 'ios') {
+  //       await requestUserIosPermission();
+  //     } else {
+  //       await requestNotificationPermission();
+  //     }
+  //   };
+  //   requestPermissions();
+  // }, []);
   useEffect(() => {
     // Request location permission when app starts
     // requestLocationPermission();
@@ -257,19 +251,19 @@ const App = () => {
       }
     }
   };
-  const requestUserIosPermission = async () => {
-    const authStatus = await messaging().requestPermission();
-    const enabled =
-      authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-      authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+  // const requestUserIosPermission = async () => {
+  //   const authStatus = await messaging().requestPermission();
+  //   const enabled =
+  //     authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+  //     authStatus === messaging.AuthorizationStatus.PROVISIONAL;
 
-    if (enabled) {
-      console.log('iOS Notification permission granted:', authStatus);
-      getFcmToken();
-    } else {
-      console.log('iOS Notification permission denied:', authStatus);
-    }
-  };
+  //   if (enabled) {
+  //     console.log('iOS Notification permission granted:', authStatus);
+  //     getFcmToken();
+  //   } else {
+  //     console.log('iOS Notification permission denied:', authStatus);
+  //   }
+  // };
 
   useEffect(() => {
     // const unsubscribe = messaging().onMessage(async remoteMessage => {

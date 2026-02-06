@@ -574,6 +574,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     fontWeight: '600',
     color: '#ffffff',
+    padding:6
   },
   actionsSection: {
     marginTop: spacing.xl,
