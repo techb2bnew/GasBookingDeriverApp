@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -40,6 +40,9 @@ import { borderRadius, fontSize, spacing } from './src/utils/dimensions';
 import { COLORS } from './src/utils/constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import messaging from '@react-native-firebase/messaging';
+
+// Navigation ref for handling notification taps
+const navigationRef = React.createRef();
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -196,6 +199,7 @@ const AppNavigator = () => {
 
   return (
     <NavigationContainer
+      ref={navigationRef}
       theme={{
         colors: {
           background: '#ffffff',
@@ -324,6 +328,70 @@ const App = () => {
 // Separate component to access auth context for socket
 const AppWithSocket = () => {
   const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    const handleNotificationNavigation = (remoteMessage) => {
+      if (!remoteMessage) return;
+
+      const data = remoteMessage.data || {};
+      const orderId = data.orderId || data.order_id;
+      const notificationType = data.type || '';
+
+      console.log('Driver app: notification opened:', {
+        orderId,
+        notificationType,
+        data,
+      });
+
+      // Wait for navigation to be ready
+      setTimeout(() => {
+        if (navigationRef.current?.isReady()) {
+          // Check for order-related notifications (ORDER_ASSIGNED, ORDER_STATUS, ORDER_CANCELLED, etc.)
+          if (orderId || notificationType?.includes('ORDER')) {
+            // Navigate to order detail screen for any order-related notification
+            navigationRef.current.navigate('OrderDetail', {
+              orderId: orderId,
+              orderNumber: data.orderNumber || data.order_number,
+            });
+          } else {
+            // Default: navigate to dashboard
+            navigationRef.current.navigate('Main', {
+              screen: 'Dashboard',
+            });
+          }
+        } else {
+          console.warn('Navigation not ready yet, retrying...');
+          // Retry after another second if navigation not ready
+          setTimeout(() => {
+            if (navigationRef.current?.isReady() && orderId) {
+              navigationRef.current.navigate('OrderDetail', {
+                orderId: orderId,
+                orderNumber: data.orderNumber || data.order_number,
+              });
+            }
+          }, 1000);
+        }
+      }, 1000); // Wait 1 second for navigation to initialize
+    };
+
+    // App background me tha, notification tap se open hua
+    const unsubscribeFromOpened = messaging().onNotificationOpenedApp(
+      remoteMessage => {
+        handleNotificationNavigation(remoteMessage);
+      },
+    );
+
+    // App quit state se notification se open hua
+    messaging()
+      .getInitialNotification()
+      .then(remoteMessage => {
+        if (remoteMessage) {
+          handleNotificationNavigation(remoteMessage);
+        }
+      });
+
+    return unsubscribeFromOpened;
+  }, []);
 
   return (
     <SocketProvider isAuthenticated={isAuthenticated}>
