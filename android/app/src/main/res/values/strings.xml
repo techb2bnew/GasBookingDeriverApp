@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">Leadway Gas Rider</string>
+    <string name="default_notification_channel_id">driver_app_channel</string>
+    <string name="default_notification_channel_name">Driver App Notifications</string>
+    <string name="default_notification_channel_description">Notifications for order updates and driver alerts</string>
 </resources>

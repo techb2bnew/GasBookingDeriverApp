@@ -329,8 +329,9 @@ const App = () => {
 const AppWithSocket = () => {
   const { isAuthenticated } = useAuth();
 
+  // Handle notification taps (background / quit state)
   useEffect(() => {
-    const handleNotificationNavigation = async (remoteMessage) => {
+    const handleNotificationNavigation = (remoteMessage) => {
       if (!remoteMessage) {
         console.log('Driver app: No remote message received');
         return;
@@ -360,90 +361,40 @@ const AppWithSocket = () => {
         fullMessage: remoteMessage,
       });
 
-      // Function to fetch order and navigate
-      const fetchOrderAndNavigate = async (retryCount = 0) => {
-        try {
-          // Check for order-related notifications
-          if (orderId || notificationType?.includes('ORDER')) {
-            // Fetch order details first
-            const token = await AsyncStorage.getItem('authToken');
-            if (!token) {
-              console.error('No auth token found');
-              // Navigate to login if not authenticated
-              if (navigationRef.current?.isReady()) {
-                navigationRef.current.navigate('Login');
-              }
-              return;
-            }
-
-            const { authService } = require('./src/services/authService');
-            const result = await authService.getOrderById(token, orderId);
-            
-            if (result.success && result.order) {
-              // Navigate with orderId - screen will fetch and set in context
-              // Wait for navigation to be ready
-              const attemptNavigation = (navRetryCount = 0) => {
-                if (navigationRef.current?.isReady()) {
-                  try {
-                    console.log('Navigating to OrderDetail with orderId:', orderId);
-                    navigationRef.current.navigate('OrderDetail', {
-                      orderId: orderId,
-                      orderNumber: data.orderNumber || data.order_number,
-                    });
-                  } catch (error) {
-                    console.error('Navigation error:', error);
-                  }
-                } else if (navRetryCount < 5) {
-                  setTimeout(() => {
-                    attemptNavigation(navRetryCount + 1);
-                  }, 1000);
-                }
-              };
-              
-              setTimeout(() => {
-                attemptNavigation();
-              }, 500);
+      // Function to attempt navigation
+      const attemptNavigation = (retryCount = 0) => {
+        if (navigationRef.current?.isReady()) {
+          try {
+            // Check for order-related notifications (ORDER_STATUS, ORDER_CANCELLED, ORDER_ASSIGNED, etc.)
+            if (orderId || notificationType?.includes('ORDER')) {
+              console.log('Navigating to OrderDetail with orderId:', orderId);
+              navigationRef.current.navigate('OrderDetail', {
+                orderId: orderId,
+                orderNumber: data.orderNumber || data.order_number,
+              });
             } else {
-              console.error('Failed to fetch order:', result.error);
-              // Navigate to dashboard if order fetch fails
-              if (navigationRef.current?.isReady()) {
-                navigationRef.current.navigate('Main', {
-                  screen: 'Dashboard',
-                });
-              }
+              console.log('Navigating to Dashboard');
+              navigationRef.current.navigate('Main', {
+                screen: 'Dashboard',
+              });
             }
-          } else {
-            // No order ID, navigate to dashboard
-            const attemptNavigation = (navRetryCount = 0) => {
-              if (navigationRef.current?.isReady()) {
-                console.log('Navigating to Dashboard');
-                navigationRef.current.navigate('Main', {
-                  screen: 'Dashboard',
-                });
-              } else if (navRetryCount < 5) {
-                setTimeout(() => {
-                  attemptNavigation(navRetryCount + 1);
-                }, 1000);
-              }
-            };
-            setTimeout(() => {
-              attemptNavigation();
-            }, 500);
+          } catch (error) {
+            console.error('Navigation error:', error);
           }
-        } catch (error) {
-          console.error('Error handling notification:', error);
-          // Fallback: navigate to dashboard
-          if (navigationRef.current?.isReady()) {
-            navigationRef.current.navigate('Main', {
-              screen: 'Dashboard',
-            });
-          }
+        } else if (retryCount < 5) {
+          // Retry up to 5 times (5 seconds total)
+          console.warn(`Navigation not ready yet, retrying... (${retryCount + 1}/5)`);
+          setTimeout(() => {
+            attemptNavigation(retryCount + 1);
+          }, 1000);
+        } else {
+          console.error('Navigation failed after 5 retries');
         }
       };
 
-      // Start processing after a short delay
+      // Start navigation attempt after a short delay
       setTimeout(() => {
-        fetchOrderAndNavigate();
+        attemptNavigation();
       }, 500);
     };
 
