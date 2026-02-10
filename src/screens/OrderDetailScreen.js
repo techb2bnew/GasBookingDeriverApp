@@ -154,7 +154,7 @@ const OrderDetailScreen = ({ navigation, route }) => {
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
           address,
-        )}&key=AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI`,
+        )}&key=AIzaSyBtb6hSmwJ9_OznDC5e8BcZM90ms4WD_DE`,
       );
       const data = await response.json();
 
@@ -373,7 +373,7 @@ const OrderDetailScreen = ({ navigation, route }) => {
               <MapViewDirections
                 origin={currentLocation}
                 destination={getCurrentDestination()}
-                apikey="AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI"
+                apikey="AIzaSyBtb6hSmwJ9_OznDC5e8BcZM90ms4WD_DE"
                 strokeWidth={3}
                 strokeColor="#030213"
                 optimizeWaypoints={true}

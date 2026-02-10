@@ -162,6 +162,12 @@ export const OrderProvider = ({children}) => {
       console.log('🔄 ORDER STATUS UPDATED:', data);
       const orderData = data.data;
       const orderId = orderData.orderId || orderData.id;
+
+      // If this is an "out_for_delivery" update triggered by OTP send (driver action),
+      // skip showing a redundant toast to the driver. Customer will still get FCM notification.
+      if (orderData.status === 'out_for_delivery' && orderData.otpSent) {
+        console.log('ℹ️ Skipping driver toast for out_for_delivery with OTP (customer-only notification).');
+      }
       
       try {
         // Fetch complete order details from API to ensure we have latest data
