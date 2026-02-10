@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,6 @@ import {
   Image,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import OTPTextInput from 'react-native-otp-textinput';
 import { useAuth } from '../context/AuthContext';
 import { authService } from '../services/authService';
 import {
@@ -43,6 +42,9 @@ const LoginScreen = () => {
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const { login, loading } = useAuth();
   const [fcmToken, setFcmToken] = useState('');
+  const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
+  const [activeOtpIndex, setActiveOtpIndex] = useState(0);
+  const otpInputsRef = useRef([]);
 console.log("fcmmm",fcmToken,);
 
 
@@ -186,6 +188,8 @@ useEffect(() => {
   const handleResendOtp = async () => {
     if (isResendDisabled) return;
     setOtp('');
+    setOtpDigits(['', '', '', '', '', '']);
+    setActiveOtpIndex(0);
     setErrors(prev => ({ ...prev, server: '' }));
 
     try {
@@ -213,6 +217,8 @@ useEffect(() => {
   const handleBackToPhone = () => {
     setShowOtpInput(false);
     setOtp('');
+    setOtpDigits(['', '', '', '', '', '']);
+    setActiveOtpIndex(0);
     setResendTimer(0);
     setIsResendDisabled(false);
     setErrors({ phone: '', otp: '', server: '' });
@@ -323,21 +329,64 @@ useEffect(() => {
                   </Text>
 
                   <View style={styles.otpInputWrapper}>
-                    <OTPTextInput
-                      handleTextChange={text => {
-                        setOtp(text);
-                        if (errors.otp)
-                          setErrors(prev => ({ ...prev, otp: '' }));
-                      }}
-                      containerStyle={styles.otpInputContainer}
-                      textInputStyle={styles.otpInput}
-                      tintColor="#1f2937"
-                      offTintColor="#6b7280"
-                      defaultValue=""
-                      keyboardType="numeric"
-                      autoFocus={true}
-                      inputCount={6}
-                    />
+                    <View style={styles.otpInputContainer}>
+                      {otpDigits.map((digit, index) => (
+                        <TextInput
+                          key={index}
+                          ref={ref => {
+                            otpInputsRef.current[index] = ref;
+                          }}
+                          style={[
+                            styles.otpInput,
+                            activeOtpIndex === index && styles.otpInputFocused,
+                          ]}
+                          keyboardType="number-pad"
+                          maxLength={1}
+                          value={digit}
+                          onChangeText={text => {
+                            setActiveOtpIndex(index);
+                            const cleanText = text.replace(/[^0-9]/g, '');
+                            const newDigits = [...otpDigits];
+                            newDigits[index] = cleanText;
+                            setOtpDigits(newDigits);
+                            const joined = newDigits.join('');
+                            setOtp(joined);
+                            if (errors.otp) {
+                              setErrors(prev => ({ ...prev, otp: '' }));
+                            }
+                            // Move to next input if user typed a digit
+                            if (cleanText && index < otpDigits.length - 1) {
+                              const nextIndex = index + 1;
+                              setActiveOtpIndex(nextIndex);
+                              otpInputsRef.current[nextIndex]?.focus();
+                            }
+                          }}
+                          onKeyPress={({ nativeEvent }) => {
+                            if (nativeEvent.key === 'Backspace') {
+                              if (otpDigits[index]) {
+                                // Just clear current digit
+                                const newDigits = [...otpDigits];
+                                newDigits[index] = '';
+                                setOtpDigits(newDigits);
+                                setOtp(newDigits.join(''));
+                              } else if (index > 0) {
+                                // Move focus to previous input and clear it
+                                const prevIndex = index - 1;
+                                const newDigits = [...otpDigits];
+                                newDigits[prevIndex] = '';
+                                setOtpDigits(newDigits);
+                                setOtp(newDigits.join(''));
+                                setActiveOtpIndex(prevIndex);
+                                otpInputsRef.current[prevIndex]?.focus();
+                              }
+                            }
+                          }}
+                          onFocus={() => setActiveOtpIndex(index)}
+                          autoFocus={index === 0}
+                          returnKeyType={index === otpDigits.length - 1 ? 'done' : 'next'}
+                        />
+                      ))}
+                    </View>
                   </View>
 
                   {Boolean(errors.otp) && (
@@ -640,8 +689,11 @@ logoContainer: {
     justifyContent: 'center',
   },
   otpInputContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    maxWidth: wp('80%'),
   },
   otpInput: {
     borderWidth: 1.5,
