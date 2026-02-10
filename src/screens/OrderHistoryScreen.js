@@ -290,9 +290,9 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: spacing.xl,
-    paddingTop: 60,
+    paddingTop: 20,
     paddingBottom: spacing.xl,
-    minHeight: hp(14),
+    // minHeight: hp(2),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

@@ -96,13 +96,6 @@ const OrderDetailScreen = ({ navigation, route }) => {
     fetchOrderFromParams();
   }, [route?.params?.orderId, currentOrder, setCurrentOrder, navigation]);
 
-  // Don't render screen if order is not available (no empty/default values)
-  // Only render when order is successfully fetched
-  if (!currentOrder) {
-    // Return empty view - no error, no loading, no empty values
-    return <View style={{ flex: 1, backgroundColor: COLORS.background }} />;
-  }
-
   // Geocode customer address when order changes
   useEffect(() => {
     if (currentOrder && currentOrder.customerAddress) {
@@ -148,6 +141,13 @@ const OrderDetailScreen = ({ navigation, route }) => {
 
     return () => clearInterval(interval);
   }, [currentOrder, currentLocation, customerCoordinates]);
+
+  // Don't render screen if order is not available (no empty/default values)
+  // Only render when order is successfully fetched
+  if (!currentOrder) {
+    // Return empty view - no error, no loading, no empty values
+    return <View style={{ flex: 1, backgroundColor: COLORS.background }} />;
+  }
 
   const geocodeAddress = async address => {
     try {
@@ -270,6 +270,7 @@ const OrderDetailScreen = ({ navigation, route }) => {
 
     switch (status) {
       case 'pending':
+      case 'assigned':
         return [
           {
             title: 'Accept Order',
@@ -279,15 +280,6 @@ const OrderDetailScreen = ({ navigation, route }) => {
           },
         ];
       case 'confirmed':
-        return [
-          {
-            title: 'Heading to Customer',
-            onPress: () => handleStatusUpdate('out_for_delivery'),
-            icon: 'directions',
-            color: '#035db7',
-          },
-        ];
-      case 'assigned':
         return [
           {
             title: 'Heading to Customer',
@@ -549,9 +541,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
-    paddingTop: 60,
+    paddingTop: 20,
     paddingBottom: spacing.xl,
-    minHeight: hp(14),
+    // minHeight: hp(14),
     backgroundColor: COLORS.primary,
     borderBottomLeftRadius: borderRadius.xl,
     borderBottomRightRadius: borderRadius.xl,
@@ -560,7 +552,7 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
   },
   headerTitle: {
-    fontSize: fontSize.lg,
+    fontSize: fontSize.xl,
     fontWeight: '600',
     color: '#ffffff', // White text
   },

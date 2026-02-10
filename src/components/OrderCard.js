@@ -11,7 +11,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
 import { COLORS } from '../utils/constants';
 
-const OrderCard = ({ order, onAccept, buttonText = "Accept Order" }) => {
+const OrderCard = ({ order, onAccept, buttonText = "Accept Order", onPress }) => {
   const formatTime = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -30,53 +30,68 @@ const OrderCard = ({ order, onAccept, buttonText = "Accept Order" }) => {
   };
   const handleCall = (phoneNumber) => {
     Linking.openURL(`tel:${phoneNumber}`);
-  }
+  };
+
   const capitalizeFirstLetter = (text) => {
     if (!text) return '';
     return text.charAt(0).toUpperCase() + text.slice(1);
   };
+
+  const getSafeAddress = (address) => {
+    if (!address) {
+      return '';
+    }
+    // Remove any trailing ", undefined" or standalone "undefined" parts
+    const cleaned = address.replace(/,?\s*undefined/gi, '').trim();
+    return cleaned;
+  };
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.orderInfo}>
-          <Text style={styles.orderId}>Order #{truncateText(order?.id, 18)}</Text>
-          <Text style={styles.orderTime}>{formatTime(order?.createdAt)}</Text>
-        </View>
-        <View style={styles.earningsContainer}>
-          <Text style={styles.earnings}>KSH{order?.totalAmount || '0'}</Text>
-          <Text style={styles.earningsLabel}>Total Amount</Text>
-        </View>
-      </View>
-
-      <View style={styles.customerSection}>
-        <View style={styles.customerInfo}>
-          <Icon name="person" size={18} color="#030213" />
-          <View style={styles.customerDetails}>
-            <Text style={styles.customerName}>{truncateText(capitalizeFirstLetter(order?.customerName) || 'Customer')}</Text>
-            <Text style={styles.customerAddress}>{order?.customerAddress || 'Address not available'}</Text>
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={onPress}
+      >
+        <View style={styles.header}>
+          <View style={styles.orderInfo}>
+            <Text style={styles.orderId}>Order #{truncateText(order?.id, 18)}</Text>
+            <Text style={styles.orderTime}>{formatTime(order?.createdAt)}</Text>
+          </View>
+          <View style={styles.earningsContainer}>
+            <Text style={styles.earnings}>KSH{order?.totalAmount || '0'}</Text>
+            <Text style={styles.earningsLabel}>Total Amount</Text>
           </View>
         </View>
-        <Pressable style={styles.phoneContainer} onPress={() => handleCall(order?.customerPhone)}>
-          <Icon name="phone" size={13} color="#035db7" />
-          <Text style={styles.phoneText}>{order?.customerPhone || 'N/A'}</Text>
-        </Pressable>
-      </View>
 
-      <View style={styles.orderDetails}>
-        <View style={styles.orderStat}>
-          <Text style={styles.statValue}>{totalQuantity}</Text>
-          <Text style={styles.statLabel}>Items</Text>
-        </View>
-        <View style={styles.orderStat}>
-          <Text style={styles.statValue}>{capitalizeFirstLetter(firstItem?.productName) || 'Gas'}</Text>
-          <Text style={styles.statLabel}>Product</Text>
-        </View>
-        <View style={styles.orderStat}>
-          <Text style={styles.statValue}>{capitalizeFirstLetter(order?.paymentMethod) || 'COD'}</Text>
-          <Text style={styles.statLabel}>Payment</Text>
+        <View style={styles.customerSection}>
+          <View style={styles.customerInfo}>
+            <Icon name="person" size={18} color="#030213" />
+            <View style={styles.customerDetails}>
+              <Text style={styles.customerName}>{truncateText(capitalizeFirstLetter(order?.customerName) || 'Customer')}</Text>
+              <Text style={styles.customerAddress}>{getSafeAddress(order?.customerAddress) || 'Address not available'}</Text>
+            </View>
+          </View>
+          <Pressable style={styles.phoneContainer} onPress={() => handleCall(order?.customerPhone)}>
+            <Icon name="phone" size={13} color="#035db7" />
+            <Text style={styles.phoneText}>{order?.customerPhone || 'N/A'}</Text>
+          </Pressable>
         </View>
 
-      </View>
+        <View style={styles.orderDetails}>
+          <View style={styles.orderStat}>
+            <Text style={styles.statValue}>{totalQuantity}</Text>
+            <Text style={styles.statLabel}>Items</Text>
+          </View>
+          <View style={styles.orderStat}>
+            <Text style={styles.statValue}>{capitalizeFirstLetter(firstItem?.productName) || 'Gas'}</Text>
+            <Text style={styles.statLabel}>Product</Text>
+          </View>
+          <View style={styles.orderStat}>
+            <Text style={styles.statValue}>{capitalizeFirstLetter(order?.paymentMethod) || 'COD'}</Text>
+            <Text style={styles.statLabel}>Payment</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
 
       <TouchableOpacity style={styles.acceptButton} onPress={onAccept}>
         <Text style={styles.acceptButtonText}>{buttonText}</Text>

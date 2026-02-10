@@ -41,6 +41,13 @@ import { COLORS } from './src/utils/constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import messaging from '@react-native-firebase/messaging';
 
+let Orientation;
+try {
+  Orientation = require('react-native-orientation-locker').default;
+} catch (_) {
+  Orientation = null;
+}
+
 // Navigation ref for handling notification taps
 const navigationRef = React.createRef();
 
@@ -213,6 +220,18 @@ const AppNavigator = () => {
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
+
+  // Lock orientation to portrait so screen does not rotate
+  useEffect(() => {
+    try {
+      if (Orientation && typeof Orientation.lockToPortrait === 'function') {
+        Orientation.lockToPortrait();
+      }
+    } catch (e) {
+      console.warn('Orientation lock skipped:', e?.message);
+    }
+  }, []);
+
   useEffect(() => {
     const requestPermissions = async () => {
       if (Platform.OS === 'ios') {

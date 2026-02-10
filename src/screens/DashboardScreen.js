@@ -22,7 +22,7 @@ import { COLORS } from '../utils/constants';
 
 const DashboardScreen = ({ navigation }) => {
   const { user, deliveryAgent, updateUser } = useAuth();
-  const { availableOrders, loading, fetchAvailableOrders, acceptOrder } =
+  const { availableOrders, loading, fetchAvailableOrders, acceptOrder, setCurrentOrder } =
     useOrder();
   const { startLocationTracking, stopLocationTracking, isTracking } =
     useLocation();
@@ -150,7 +150,14 @@ const DashboardScreen = ({ navigation }) => {
   };
 
   const renderOrderItem = ({ item }) => (
-    <OrderCard order={item} onAccept={() => handleAcceptOrder(item?.id)} />
+    <OrderCard
+      order={item}
+      onAccept={() => handleAcceptOrder(item?.id)}
+      onPress={() => {
+        setCurrentOrder(item);
+        navigation.navigate('OrderDetail');
+      }}
+    />
   );
 
   return (
@@ -285,7 +292,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     paddingHorizontal: spacing.xl,
-    paddingTop: 60,
+    paddingTop: 30,
     paddingBottom: spacing.xl,
     minHeight: hp(14),
     // backgroundColor: '#035db7',
@@ -294,7 +301,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: borderRadius.xl,
   },
   greeting: {
-    fontSize: fontSize.xl,
+    fontSize: fontSize.xxl,
     fontWeight: '600',
     color: '#fff', // Dark text
   },

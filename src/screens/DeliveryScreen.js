@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -17,7 +17,6 @@ import {
 } from 'react-native';
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import OTPTextInput from 'react-native-otp-textinput';
 import { useOrder } from '../context/OrderContext';
 import { authService } from '../services/authService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -36,6 +35,9 @@ const DeliveryScreen = ({ navigation }) => {
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
   const [canResend, setCanResend] = useState(true);
+  const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
+  const [activeOtpIndex, setActiveOtpIndex] = useState(0);
+  const otpInputsRef = useRef([]);
 
   const selectImage = () => {
     // Alert.alert(
@@ -167,7 +169,20 @@ const DeliveryScreen = ({ navigation }) => {
     return () => clearInterval(interval);
   }, [resendTimer]);
 
+  // Reset OTP digits whenever modal opens
+  useEffect(() => {
+    if (showOtpModal) {
+      setOtpDigits(['', '', '', '', '', '']);
+      setDeliveryOtp('');
+      setOtpError('');
+    }
+  }, [showOtpModal]);
+
   const handleCompleteDelivery = async () => {
+    if (!currentOrder || !currentOrder.id) {
+      setApiError('No active order found. Please open an order again from dashboard.');
+      return;
+    }
     if (!deliveryPhoto) {
       setApiError('Please take a delivery proof photo');
       return;
@@ -206,6 +221,11 @@ const DeliveryScreen = ({ navigation }) => {
   const handleResendOtp = async () => {
     if (!canResend) return;
 
+    if (!currentOrder || !currentOrder.id) {
+      setOtpError('No active order found. Please reopen the order.');
+      return;
+    }
+
     setSendingOtp(true);
     setOtpError('');
 
@@ -224,6 +244,7 @@ const DeliveryScreen = ({ navigation }) => {
         setResendTimer(30); // 30 seconds timer
         setCanResend(false);
         setDeliveryOtp(''); // Clear previous OTP
+        setOtpDigits(['', '', '', '', '', '']);
       } else {
         setOtpError(result.error || 'Failed to resend OTP');
         setSendingOtp(false);
@@ -241,6 +262,7 @@ const DeliveryScreen = ({ navigation }) => {
     setOtpError('');
     setResendTimer(0);
     setCanResend(true);
+    setOtpDigits(['', '', '', '', '', '']);
   };
 
   const handleOtpSubmit = async () => {
@@ -256,6 +278,12 @@ const DeliveryScreen = ({ navigation }) => {
       const token = await AsyncStorage.getItem('authToken');
       if (!token) {
         setOtpError('Authentication token not found');
+        setVerifyingOtp(false);
+        return;
+      }
+
+      if (!currentOrder || !currentOrder.id) {
+        setOtpError('No active order found. Please reopen the order.');
         setVerifyingOtp(false);
         return;
       }
@@ -488,32 +516,69 @@ const DeliveryScreen = ({ navigation }) => {
               )}
 
               <View style={styles.otpContainer}>
-                <OTPTextInput
-                  handleTextChange={(text) => {
-                    setDeliveryOtp(text);
-                    if (otpError) setOtpError('');
-                  }}
-                  containerStyle={styles.otpInputContainer}
-                  textInputStyle={styles.otpInput}
-                  tintColor="#1f2937"
-                  offTintColor="#6b7280"
-                  defaultValue=""
-                  keyboardType="numeric"
-                  autoFocus={true}
-                  inputCount={6}
-                  keyboardAppearance="light"
-                  returnKeyType="done"
-                  onSubmitEditing={() => {
-                    // Auto-submit when 6 digits are entered
-                    if (deliveryOtp.length === 6) {
-                      handleOtpSubmit();
-                    }
-                  }}
-                  {...(Platform.OS === 'ios' && {
-                    inputAccessoryViewID: 'otpToolbar'
-                  })}
-                />
-
+                <View style={styles.otpInputContainer}>
+                  {otpDigits.map((digit, index) => (
+                    <TextInput
+                      key={index}
+                      ref={ref => {
+                        otpInputsRef.current[index] = ref;
+                      }}
+                      style={[
+                        styles.otpInput,
+                        activeOtpIndex === index && { borderColor: '#1f2937' },
+                        activeOtpIndex !== index && digit === '' && { borderColor: '#d1d5db' },
+                      ]}
+                      keyboardType="number-pad"
+                      maxLength={1}
+                      value={digit}
+                      onChangeText={text => {
+                        setActiveOtpIndex(index);
+                        const cleanText = text.replace(/[^0-9]/g, '');
+                        const newDigits = [...otpDigits];
+                        newDigits[index] = cleanText;
+                        setOtpDigits(newDigits);
+                        const joined = newDigits.join('');
+                        setDeliveryOtp(joined);
+                        if (otpError) {
+                          setOtpError('');
+                        }
+                        // Move to next input if user typed a digit
+                        if (cleanText && index < otpDigits.length - 1) {
+                          const nextIndex = index + 1;
+                          setActiveOtpIndex(nextIndex);
+                          otpInputsRef.current[nextIndex]?.focus();
+                        }
+                        // If all 6 digits filled, optionally auto-submit
+                        if (joined.length === 6) {
+                          Keyboard.dismiss();
+                        }
+                      }}
+                      onKeyPress={({ nativeEvent }) => {
+                        if (nativeEvent.key === 'Backspace') {
+                          if (otpDigits[index]) {
+                            // Just clear current digit
+                            const newDigits = [...otpDigits];
+                            newDigits[index] = '';
+                            setOtpDigits(newDigits);
+                            setDeliveryOtp(newDigits.join(''));
+                          } else if (index > 0) {
+                            // Move focus to previous input and clear it
+                            const prevIndex = index - 1;
+                            const newDigits = [...otpDigits];
+                            newDigits[prevIndex] = '';
+                            setOtpDigits(newDigits);
+                            setDeliveryOtp(newDigits.join(''));
+                            setActiveOtpIndex(prevIndex);
+                            otpInputsRef.current[prevIndex]?.focus();
+                          }
+                        }
+                      }}
+                      onFocus={() => setActiveOtpIndex(index)}
+                      autoFocus={index === 0}
+                      returnKeyType={index === otpDigits.length - 1 ? 'done' : 'next'}
+                    />
+                  ))}
+                </View>
               </View>
               {otpError ? (
                 <View style={styles.otpErrorContainer}>
@@ -582,9 +647,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
-    paddingTop: 60,
+    paddingTop: 20,
     paddingBottom: spacing.xl,
-    minHeight: hp(14),
+    // minHeight: hp(14),
     backgroundColor: "#035db7",
     borderBottomLeftRadius: borderRadius.xl,
     borderBottomRightRadius: borderRadius.xl,
@@ -594,7 +659,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     flex: 1,
-    fontSize: fontSize.lg,
+    fontSize: fontSize.xl,
     fontWeight: '600',
     color: '#ffffff', // White text
     textAlign: 'center',
@@ -869,7 +934,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   otpInputContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: spacing.md,
+    width: '100%',
+    // maxWidth: wp('80%'),
+    alignSelf: 'center',
   },
   otpInput: {
     borderWidth: 2,

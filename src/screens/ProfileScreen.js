@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: spacing.xl,
-    paddingTop: 60,
+    paddingTop: 20,
     paddingBottom: spacing.xl,
     flexDirection: 'row',
     alignItems: 'center',
@@ -469,9 +469,11 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: borderRadius.xl,
   },
   headerTitle: {
+    flex: 1,
     fontSize: fontSize.xl,
-    fontWeight: '600',
-    color: 'white', // Dark text
+    fontWeight: '700',
+    color: 'white',
+    textAlign: 'center',
   },
   backButton: {
     padding: spacing.sm,

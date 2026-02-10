@@ -108,9 +108,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
-    paddingTop: 60,
+    paddingTop: 20,
     paddingBottom: spacing.xl,
-    minHeight: hp(14),
+    // minHeight: hp(14),
     backgroundColor: "#035db7",
     borderBottomLeftRadius: borderRadius.xl,
     borderBottomRightRadius: borderRadius.xl,
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
   },
   headerTitle: {
-    fontSize: fontSize.lg,
+    fontSize: fontSize.lxlg,
     fontWeight: '600',
     color: '#ffffff', // White text
   },

@@ -14,7 +14,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_ENDPOINTS } from '../utils/constants';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { borderRadius, spacing, hp } from '../utils/dimensions';
+import { borderRadius, spacing, hp, fontSize } from '../utils/dimensions';
 import { authService } from '../services/authService';
 import { useOrder } from '../context/OrderContext';
 
@@ -375,9 +375,9 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: spacing.xl,
-    paddingTop: 60,
+    paddingTop: 20,
     paddingBottom: spacing.xl,
-    minHeight: hp(14),
+    // minHeight: hp(14),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -387,7 +387,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     flex: 1,
-    fontSize: 18,
+    fontSize: fontSize.xl,
     fontWeight: '700',
     color: COLORS.white,
     textAlign: 'center',
