@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
-    paddingTop: 20,
+    paddingTop: Platform.OS === 'ios' ? 60 : 20,
     paddingBottom: spacing.xl,
     // minHeight: hp(18),
     backgroundColor: COLORS.primary,

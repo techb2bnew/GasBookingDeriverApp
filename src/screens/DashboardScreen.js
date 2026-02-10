@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   Alert,
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useOrder } from '../context/OrderContext';
@@ -292,7 +293,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     paddingHorizontal: spacing.xl,
-    paddingTop: 30,
+    paddingTop: Platform.OS === 'ios' ? 60 : 20,
     paddingBottom: spacing.xl,
     minHeight: hp(14),
     // backgroundColor: '#035db7',

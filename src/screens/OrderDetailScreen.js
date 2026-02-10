@@ -11,6 +11,7 @@ import {
   Modal,
   TextInput,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -541,7 +542,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
-    paddingTop: 20,
+    paddingTop: Platform.OS === 'ios' ? 60 : 20,
     paddingBottom: spacing.xl,
     // minHeight: hp(14),
     backgroundColor: COLORS.primary,

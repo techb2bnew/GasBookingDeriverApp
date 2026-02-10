@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   ActivityIndicator,
   Alert,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -375,7 +376,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: spacing.xl,
-    paddingTop: 20,
+    paddingTop: Platform.OS === 'ios' ? 60 : 20,
     paddingBottom: spacing.xl,
     // minHeight: hp(14),
     flexDirection: 'row',
