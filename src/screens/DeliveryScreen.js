@@ -937,7 +937,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
+    // paddingHorizontal: spacing.md,
     width: '100%',
     // maxWidth: wp('80%'),
     alignSelf: 'center',
